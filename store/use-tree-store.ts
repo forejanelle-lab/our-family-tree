@@ -232,6 +232,21 @@ function applyConnection(
   return next;
 }
 
+const emptySnapshot = {
+  trees: [EMPTY_TREE],
+  activeTreeId: EMPTY_TREE.id,
+  people: [] as Person[],
+  relationships: [] as Relationship[],
+  photos: [] as Photo[],
+  stories: [] as Story[],
+  events: [] as FamilyEvent[],
+  sources: [] as Source[],
+  activity: [] as ActivityItem[],
+  selectedPersonId: null as string | null,
+  profileOpen: false,
+  onboardingStep: "none" as const,
+};
+
 const aponteSnapshot = {
   trees: [APONTE_TREE],
   activeTreeId: APONTE_TREE.id,
@@ -247,13 +262,11 @@ const aponteSnapshot = {
   onboardingStep: "none" as const,
 };
 
-const williamsSnapshot = aponteSnapshot;
-
 export const useTreeStore = create<TreeState>()(
   persist(
     (set, get) => ({
       hydrated: false,
-      ...williamsSnapshot,
+      ...emptySnapshot,
       profileTab: "details",
       saveState: "saved",
       addPersonOpen: false,
@@ -261,7 +274,7 @@ export const useTreeStore = create<TreeState>()(
       shareOpen: false,
       searchOpen: false,
       searchQuery: "",
-      generationLimit: 2,
+      generationLimit: 4,
       focusedPersonId: null,
       profileEditing: false,
       userName: "Janelle",
@@ -433,40 +446,21 @@ export const useTreeStore = create<TreeState>()(
     }),
     {
       name: "our-family-tree-v1",
-      version: 3,
+      version: 4,
       skipHydration: true,
       migrate: (persisted) => {
         const saved = (persisted || {}) as Partial<TreeState>;
-        const looksLikeWilliams =
-          saved.activeTreeId === "tree_williams" ||
-          saved.trees?.some((tree) => tree.id === "tree_williams" || tree.name.includes("Williams")) ||
-          saved.people?.some((person) => person.lastName === "Williams");
-        if (!saved.people?.length || looksLikeWilliams) {
-          return {
-            trees: aponteSnapshot.trees,
-            activeTreeId: aponteSnapshot.activeTreeId,
-            people: aponteSnapshot.people,
-            relationships: aponteSnapshot.relationships,
-            photos: aponteSnapshot.photos,
-            stories: aponteSnapshot.stories,
-            events: aponteSnapshot.events,
-            sources: aponteSnapshot.sources,
-            activity: aponteSnapshot.activity,
-            selectedPersonId: aponteSnapshot.selectedPersonId,
-            userName: saved.userName || "Janelle",
-          };
-        }
         return {
-          trees: saved.trees ?? aponteSnapshot.trees,
-          activeTreeId: saved.activeTreeId ?? aponteSnapshot.activeTreeId,
-          people: saved.people,
-          relationships: saved.relationships ?? [],
-          photos: saved.photos ?? [],
-          stories: saved.stories ?? [],
-          events: saved.events ?? [],
-          sources: saved.sources ?? [],
-          activity: saved.activity ?? [],
-          selectedPersonId: saved.selectedPersonId ?? null,
+          trees: emptySnapshot.trees,
+          activeTreeId: emptySnapshot.activeTreeId,
+          people: [],
+          relationships: [],
+          photos: [],
+          stories: [],
+          events: [],
+          sources: [],
+          activity: [],
+          selectedPersonId: null,
           userName: saved.userName || "Janelle",
         };
       },

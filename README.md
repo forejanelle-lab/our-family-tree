@@ -9,7 +9,4 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-**Aponte family**
-- Invite code (view): `APONTE`
-- View passcode: `HOME`
-- Join code (create account to edit): `FORE-2026`
+Start with an empty archive, then add yourself and grow the tree.

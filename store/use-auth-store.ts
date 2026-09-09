@@ -158,8 +158,8 @@ export const useAuthStore = create<AuthState>()(
 
         const user = toUser(account);
         useTreeStore.getState().setUserName(firstNameFrom(user.name));
-        if (useTreeStore.getState().people.length === 0 || user.role === "editor" || account.email === DEMO_EMAIL) {
-          useTreeStore.getState().loadAponteTree();
+        if (account.email === DEMO_EMAIL && useTreeStore.getState().people.length === 0) {
+          useTreeStore.getState().createEmptyTree();
         }
         set({ accounts, user, guestView: false, role: user.role, signInPromptOpen: false });
         return { ok: true };
@@ -191,11 +191,8 @@ export const useAuthStore = create<AuthState>()(
           const tree = findTreeByEditCode(code, extra);
           if (!tree) return { ok: false, error: "That family join code isn’t valid." };
           role = "editor";
-          if (tree.id === APONTE_TREE.id || tree.id === WILLIAMS_TREE.id) {
-            useTreeStore.getState().loadAponteTree();
-          }
-        } else if (useTreeStore.getState().people.length === 0) {
-          useTreeStore.getState().loadAponteTree();
+        } else {
+          useTreeStore.getState().createEmptyTree();
         }
 
         const account: StoredAccount = {
@@ -245,9 +242,8 @@ export const useAuthStore = create<AuthState>()(
         if (!matchesViewPasscode(tree, passcode)) {
           return { ok: false, error: "That passcode doesn’t match this family archive." };
         }
-        if (tree.id === APONTE_TREE.id || tree.id === WILLIAMS_TREE.id) {
-          useTreeStore.getState().loadAponteTree();
-        }
+        if (tree.id === APONTE_TREE.id) useTreeStore.getState().loadAponteTree();
+        if (tree.id === WILLIAMS_TREE.id) useTreeStore.getState().loadWilliamsTree();
         set({ guestView: true, user: null, role: "viewer", signInPromptOpen: false });
         return { ok: true };
       },
