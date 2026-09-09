@@ -2,15 +2,15 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { newId } from "@/lib/format";
 import {
+  APONTE_ACTIVITY,
+  APONTE_EVENTS,
+  APONTE_PEOPLE,
+  APONTE_PHOTOS,
+  APONTE_RELATIONSHIPS,
+  APONTE_SOURCES,
+  APONTE_STORIES,
+  APONTE_TREE,
   EMPTY_TREE,
-  MOCK_ACTIVITY,
-  MOCK_EVENTS,
-  MOCK_PEOPLE,
-  MOCK_PHOTOS,
-  MOCK_RELATIONSHIPS,
-  MOCK_SOURCES,
-  MOCK_STORIES,
-  WILLIAMS_TREE,
 } from "@/lib/mock-data";
 import {
   computeGenerations,
@@ -92,6 +92,7 @@ interface TreeState {
   setShareAccess: (access: ShareAccess) => void;
   createEmptyTree: () => void;
   loadWilliamsTree: () => void;
+  loadAponteTree: () => void;
   startOnboardingSelf: (draft: PersonDraft) => string;
   finishOnboarding: () => void;
   setProfileEditing: (value: boolean) => void;
@@ -102,7 +103,7 @@ function touchSave(set: (partial: Partial<TreeState>) => void) {
   setTimeout(() => set({ saveState: "saved" }), 700);
 }
 
-function personFromDraft(draft: PersonDraft, treeId: string, generation = 1, branch = "Williams"): Person {
+function personFromDraft(draft: PersonDraft, treeId: string, generation = 1, branch = "Aponte"): Person {
   const timestamp = new Date().toISOString();
   return {
     id: newId("p"),
@@ -231,20 +232,22 @@ function applyConnection(
   return next;
 }
 
-const williamsSnapshot = {
-  trees: [WILLIAMS_TREE],
-  activeTreeId: WILLIAMS_TREE.id,
-  people: MOCK_PEOPLE,
-  relationships: MOCK_RELATIONSHIPS,
-  photos: MOCK_PHOTOS,
-  stories: MOCK_STORIES,
-  events: MOCK_EVENTS,
-  sources: MOCK_SOURCES,
-  activity: MOCK_ACTIVITY,
-  selectedPersonId: "sarah" as string | null,
+const aponteSnapshot = {
+  trees: [APONTE_TREE],
+  activeTreeId: APONTE_TREE.id,
+  people: APONTE_PEOPLE,
+  relationships: APONTE_RELATIONSHIPS,
+  photos: APONTE_PHOTOS,
+  stories: APONTE_STORIES,
+  events: APONTE_EVENTS,
+  sources: APONTE_SOURCES,
+  activity: APONTE_ACTIVITY,
+  selectedPersonId: "eric" as string | null,
   profileOpen: true,
   onboardingStep: "none" as const,
 };
+
+const williamsSnapshot = aponteSnapshot;
 
 export const useTreeStore = create<TreeState>()(
   persist(
@@ -258,7 +261,7 @@ export const useTreeStore = create<TreeState>()(
       shareOpen: false,
       searchOpen: false,
       searchQuery: "",
-      generationLimit: 4,
+      generationLimit: 2,
       focusedPersonId: null,
       profileEditing: false,
       userName: "Janelle",
@@ -405,7 +408,10 @@ export const useTreeStore = create<TreeState>()(
       },
 
       loadWilliamsTree: () => {
-        set({ ...williamsSnapshot, profileTab: "details", saveState: "saved" });
+        set({ ...aponteSnapshot, profileTab: "details", saveState: "saved" });
+      },
+      loadAponteTree: () => {
+        set({ ...aponteSnapshot, profileTab: "details", saveState: "saved" });
       },
 
       startOnboardingSelf: (draft) => {
@@ -427,28 +433,32 @@ export const useTreeStore = create<TreeState>()(
     }),
     {
       name: "our-family-tree-v1",
-      version: 2,
+      version: 3,
       skipHydration: true,
       migrate: (persisted) => {
         const saved = (persisted || {}) as Partial<TreeState>;
-        if (!saved.people?.length) {
+        const looksLikeWilliams =
+          saved.activeTreeId === "tree_williams" ||
+          saved.trees?.some((tree) => tree.id === "tree_williams" || tree.name.includes("Williams")) ||
+          saved.people?.some((person) => person.lastName === "Williams");
+        if (!saved.people?.length || looksLikeWilliams) {
           return {
-            trees: williamsSnapshot.trees,
-            activeTreeId: williamsSnapshot.activeTreeId,
-            people: williamsSnapshot.people,
-            relationships: williamsSnapshot.relationships,
-            photos: williamsSnapshot.photos,
-            stories: williamsSnapshot.stories,
-            events: williamsSnapshot.events,
-            sources: williamsSnapshot.sources,
-            activity: williamsSnapshot.activity,
-            selectedPersonId: williamsSnapshot.selectedPersonId,
+            trees: aponteSnapshot.trees,
+            activeTreeId: aponteSnapshot.activeTreeId,
+            people: aponteSnapshot.people,
+            relationships: aponteSnapshot.relationships,
+            photos: aponteSnapshot.photos,
+            stories: aponteSnapshot.stories,
+            events: aponteSnapshot.events,
+            sources: aponteSnapshot.sources,
+            activity: aponteSnapshot.activity,
+            selectedPersonId: aponteSnapshot.selectedPersonId,
             userName: saved.userName || "Janelle",
           };
         }
         return {
-          trees: saved.trees ?? williamsSnapshot.trees,
-          activeTreeId: saved.activeTreeId ?? williamsSnapshot.activeTreeId,
+          trees: saved.trees ?? aponteSnapshot.trees,
+          activeTreeId: saved.activeTreeId ?? aponteSnapshot.activeTreeId,
           people: saved.people,
           relationships: saved.relationships ?? [],
           photos: saved.photos ?? [],

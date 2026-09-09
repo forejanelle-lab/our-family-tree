@@ -1,4 +1,4 @@
-import { WILLIAMS_TREE, EMPTY_TREE } from "@/lib/mock-data";
+import { APONTE_TREE, WILLIAMS_TREE, EMPTY_TREE } from "@/lib/mock-data";
 import type { FamilyTreeRecord } from "@/lib/types";
 
 export function normalizeCode(code: string) {
@@ -6,7 +6,7 @@ export function normalizeCode(code: string) {
 }
 
 export function knownTrees(): FamilyTreeRecord[] {
-  return [WILLIAMS_TREE, EMPTY_TREE];
+  return [APONTE_TREE, WILLIAMS_TREE, EMPTY_TREE];
 }
 
 export function findTreeByInviteCode(code: string, extra: FamilyTreeRecord[] = []) {

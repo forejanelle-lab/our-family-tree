@@ -572,6 +572,67 @@ export const MOCK_ACTIVITY: ActivityItem[] = [
   { id: "a4", text: "Patricia Williams edited a profile", detail: "James Williams", time: "1 week ago" },
 ];
 
+const APONTE_ID = "tree_aponte";
+
+export const APONTE_TREE: FamilyTreeRecord = {
+  id: APONTE_ID,
+  name: "The Aponte Family",
+  ownerName: "Janelle",
+  shareAccess: "family",
+  hideLivingDates: true,
+  hideContactInfo: true,
+  hidePrivateNotes: true,
+  hidePhotosPublic: false,
+  inviteCode: "APONTE",
+  viewPasscode: "HOME",
+  editCode: "FORE-2026",
+};
+
+export const APONTE_PEOPLE: Person[] = [
+  {
+    ...photo("eric", {
+      firstName: "Eric",
+      lastName: "Aponte",
+      gender: "male",
+      birthDate: "",
+      generation: 1,
+      branch: "Aponte",
+    }),
+    familyTreeId: APONTE_ID,
+  },
+  {
+    ...photo("janelle", {
+      firstName: "Janelle",
+      lastName: "Fore",
+      gender: "female",
+      birthDate: "",
+      email: "janellefore98@gmail.com",
+      generation: 1,
+      branch: "Fore",
+    }),
+    familyTreeId: APONTE_ID,
+  },
+];
+
+export const APONTE_RELATIONSHIPS: Relationship[] = [
+  {
+    id: "rel-eric-janelle",
+    familyTreeId: APONTE_ID,
+    personId: "eric",
+    relatedPersonId: "janelle",
+    relationshipType: "spouse",
+    createdAt: now,
+  },
+];
+
+export const APONTE_PHOTOS: Photo[] = [];
+export const APONTE_STORIES: Story[] = [];
+export const APONTE_EVENTS: FamilyEvent[] = [];
+export const APONTE_SOURCES: Source[] = [];
+export const APONTE_ACTIVITY: ActivityItem[] = [
+  { id: "aa1", text: "The Aponte family archive was opened", detail: "Eric and Janelle", time: "Just now" },
+];
+
 export const EMPTY_TREE: FamilyTreeRecord = {
   id: "tree_new",
   name: "Your Family",

@@ -32,13 +32,13 @@ export function SignInPrompt() {
           variant="secondary"
           onClick={() => {
             close();
-            router.push("/signup?join=OAK-1935");
+            router.push("/signup?join=FORE-2026");
           }}
         >
           Create an account
         </Button>
         <p className="text-center text-xs text-soft">
-          Family members use join code <span className="font-medium text-charcoal">OAK-1935</span> to edit the Williams tree.
+          Family members use join code <span className="font-medium text-charcoal">FORE-2026</span> to edit the Aponte tree.
         </p>
       </div>
     </Modal>

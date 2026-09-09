@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
 const SAMPLE = [
-  { name: "Robert Williams", birth: "1935-03-14", parent: "", partner: "Margaret Roberts" },
-  { name: "Margaret Roberts", birth: "1938-07-22", parent: "", partner: "Robert Williams" },
-  { name: "James Williams", birth: "1960-05-09", parent: "Robert Williams", partner: "Patricia Moore" },
+  { name: "Eric Aponte", birth: "", parent: "", partner: "Janelle Fore" },
+  { name: "Janelle Fore", birth: "", parent: "", partner: "Eric Aponte" },
 ];
 
 export default function ImportPage() {

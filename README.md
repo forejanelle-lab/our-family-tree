@@ -9,8 +9,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-**Williams family preview**
-- Invite code (view): `WILLIAMS`
-- View passcode: `ROSE`
-- Join code (create account to edit): `OAK-1935`
-- Demo login: `janelle@williams.family` · `familytree`
+**Aponte family**
+- Invite code (view): `APONTE`
+- View passcode: `HOME`
+- Join code (create account to edit): `FORE-2026`

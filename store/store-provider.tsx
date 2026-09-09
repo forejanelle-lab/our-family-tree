@@ -8,7 +8,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const finishTree = useTreeStore.persist.onFinishHydration(() => {
       if (useTreeStore.getState().people.length === 0) {
-        useTreeStore.getState().loadWilliamsTree();
+        useTreeStore.getState().loadAponteTree();
       }
       useTreeStore.setState({ hydrated: true });
     });
@@ -18,7 +18,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     if (useTreeStore.persist.hasHydrated()) {
       if (useTreeStore.getState().people.length === 0) {
-        useTreeStore.getState().loadWilliamsTree();
+        useTreeStore.getState().loadAponteTree();
       }
       useTreeStore.setState({ hydrated: true });
     } else void useTreeStore.persist.rehydrate();

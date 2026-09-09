@@ -149,7 +149,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
                   id="join"
                   value={joinCode}
                   onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
-                  placeholder="OAK-1935"
+                  placeholder="FORE-2026"
                   autoCapitalize="characters"
                 />
               </Field>

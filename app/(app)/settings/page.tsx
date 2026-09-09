@@ -9,7 +9,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const tree = useActiveTree();
   const updateTree = useTreeStore((s) => s.updateTree);
-  const loadWilliamsTree = useTreeStore((s) => s.loadWilliamsTree);
+  const loadAponteTree = useTreeStore((s) => s.loadAponteTree);
   const createEmptyTree = useTreeStore((s) => s.createEmptyTree);
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
@@ -67,8 +67,8 @@ export default function SettingsPage() {
           <h2 className="font-serif text-2xl">This tree</h2>
           <p className="mt-2 text-sm text-soft">{tree.name}</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={loadWilliamsTree}>
-              Restore Williams sample
+            <Button variant="secondary" onClick={loadAponteTree}>
+              Restore Aponte family
             </Button>
             <Button
               variant="ghost"

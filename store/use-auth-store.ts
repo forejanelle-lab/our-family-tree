@@ -50,7 +50,7 @@ async function syncAccountToServer(
 }
 import { findTreeByEditCode, findTreeByInviteCode, matchesViewPasscode } from "@/lib/invites";
 import { newId } from "@/lib/format";
-import { WILLIAMS_TREE } from "@/lib/mock-data";
+import { APONTE_TREE, WILLIAMS_TREE } from "@/lib/mock-data";
 import type { AccessRole } from "@/lib/types";
 import { useTreeStore } from "@/store/use-tree-store";
 
@@ -159,7 +159,7 @@ export const useAuthStore = create<AuthState>()(
         const user = toUser(account);
         useTreeStore.getState().setUserName(firstNameFrom(user.name));
         if (useTreeStore.getState().people.length === 0 || user.role === "editor" || account.email === DEMO_EMAIL) {
-          useTreeStore.getState().loadWilliamsTree();
+          useTreeStore.getState().loadAponteTree();
         }
         set({ accounts, user, guestView: false, role: user.role, signInPromptOpen: false });
         return { ok: true };
@@ -191,9 +191,11 @@ export const useAuthStore = create<AuthState>()(
           const tree = findTreeByEditCode(code, extra);
           if (!tree) return { ok: false, error: "That family join code isn’t valid." };
           role = "editor";
-          if (tree.id === WILLIAMS_TREE.id) useTreeStore.getState().loadWilliamsTree();
+          if (tree.id === APONTE_TREE.id || tree.id === WILLIAMS_TREE.id) {
+            useTreeStore.getState().loadAponteTree();
+          }
         } else if (useTreeStore.getState().people.length === 0) {
-          useTreeStore.getState().loadWilliamsTree();
+          useTreeStore.getState().loadAponteTree();
         }
 
         const account: StoredAccount = {
@@ -243,7 +245,9 @@ export const useAuthStore = create<AuthState>()(
         if (!matchesViewPasscode(tree, passcode)) {
           return { ok: false, error: "That passcode doesn’t match this family archive." };
         }
-        if (tree.id === WILLIAMS_TREE.id) useTreeStore.getState().loadWilliamsTree();
+        if (tree.id === APONTE_TREE.id || tree.id === WILLIAMS_TREE.id) {
+          useTreeStore.getState().loadAponteTree();
+        }
         set({ guestView: true, user: null, role: "viewer", signInPromptOpen: false });
         return { ok: true };
       },
