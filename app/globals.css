@@ -41,7 +41,10 @@ body {
   color: var(--color-charcoal);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
 }
+
 
 * {
   border-color: var(--color-line);

@@ -9,9 +9,9 @@ export default function SourcesPage() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-10">
-        <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">Sources</h1>
-        <p className="mt-2 text-sm text-soft">The documents that quietly prove a life was lived.</p>
+      <div className="mx-auto max-w-3xl px-4 py-4 lg:px-10 lg:py-8">
+        <h1 className="hidden font-serif text-4xl text-charcoal lg:block">Sources</h1>
+        <p className="text-sm text-soft lg:mt-2">The documents that quietly prove a life was lived.</p>
         <div className="mt-8 space-y-4">
           {sources.map((source) => (
             <article key={source.id} className="rounded-3xl border border-line bg-white p-5">

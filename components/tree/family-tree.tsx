@@ -149,7 +149,7 @@ function TreeCanvas() {
       <div className="relative h-full min-w-0 flex-1 overscroll-none">
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col items-start justify-between gap-3 p-3 sm:flex-row sm:gap-4 sm:p-7">
           <div className="min-w-0">
-            <h1 className="truncate font-serif text-2xl tracking-tight text-charcoal sm:text-4xl">
+            <h1 className="hidden truncate font-serif text-4xl tracking-tight text-charcoal lg:block">
               {tree?.name ?? "Your Family"}
             </h1>
             <p className="mt-0.5 text-xs text-soft sm:mt-1 sm:text-sm">

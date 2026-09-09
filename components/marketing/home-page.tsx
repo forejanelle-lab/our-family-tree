@@ -93,13 +93,13 @@ export function MarketingHome() {
         <p className="mt-4 max-w-3xl text-base leading-relaxed text-soft sm:mt-6 sm:text-xl">
           See everyone at once. Join with a code. Look without an account, or sign in when you are ready to change the archive. One name is enough to begin. Then the tree takes shape.
         </p>
-        <div className="mt-10 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:flex-wrap">
           {signedIn ? (
-            <ButtonLink href="/home" size="lg">
+            <ButtonLink href="/home" size="lg" className="w-full sm:w-auto">
               Continue your story
             </ButtonLink>
           ) : (
-            <ButtonLink href="/signup" size="lg">
+            <ButtonLink href="/signup" size="lg" className="w-full sm:w-auto">
               Create an account
             </ButtonLink>
           )}
@@ -123,7 +123,7 @@ export function MarketingHome() {
                 className="font-medium tracking-[0.12em]"
                 autoCapitalize="characters"
               />
-              <Button type="submit" className="sm:px-6">
+              <Button type="submit" className="w-full sm:w-auto sm:px-6">
                 Continue
               </Button>
             </div>
@@ -160,7 +160,7 @@ export function MarketingHome() {
             We tell these stories because they are the first ones. Everything else grows from them.
           </p>
           <div className="mt-12">
-            <ButtonLink href={signedIn ? "/home" : "/signup"} size="lg">
+            <ButtonLink href={signedIn ? "/home" : "/signup"} size="lg" className="w-full sm:w-auto">
               {signedIn ? "Open your tree" : "Start with yourself"}
             </ButtonLink>
           </div>

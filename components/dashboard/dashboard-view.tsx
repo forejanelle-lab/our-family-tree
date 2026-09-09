@@ -23,9 +23,9 @@ export function DashboardView() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-10 sm:py-10">
+      <div className="mx-auto max-w-5xl px-4 py-4 lg:px-10 lg:py-10">
         <p className="text-sm text-soft">{greeting()}, {hello}</p>
-        <h1 className="mt-2 font-serif text-3xl text-charcoal sm:text-5xl">Continue building your family story.</h1>
+        <h1 className="mt-1 font-serif text-[1.75rem] leading-snug text-charcoal lg:mt-2 lg:text-5xl">Continue building your family story.</h1>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">
           <article className="rounded-3xl border border-line bg-white p-6 shadow-[var(--shadow-card)]">

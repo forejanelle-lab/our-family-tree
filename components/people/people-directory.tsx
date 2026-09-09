@@ -35,9 +35,9 @@ export function PeopleDirectory() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-10">
-        <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">People</h1>
-        <p className="mt-2 text-sm text-soft">{people.length} family members</p>
+      <div className="mx-auto max-w-6xl px-4 py-4 lg:px-10 lg:py-8">
+        <h1 className="hidden font-serif text-4xl text-charcoal lg:block">People</h1>
+        <p className="text-sm text-soft lg:mt-2">{people.length} family members</p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <div className="w-full sm:min-w-[220px] sm:flex-1">
             <TextInput

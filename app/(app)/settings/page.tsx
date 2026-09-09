@@ -18,9 +18,9 @@ export default function SettingsPage() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="mx-auto max-w-2xl px-4 py-8 sm:px-10">
-        <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">Settings</h1>
-        <p className="mt-2 text-sm text-soft">Keep the archive warm, private, and yours.</p>
+      <div className="mx-auto max-w-2xl px-4 py-4 lg:px-10 lg:py-8">
+        <h1 className="hidden font-serif text-4xl text-charcoal lg:block">Settings</h1>
+        <p className="text-sm text-soft lg:mt-2">Keep the archive warm, private, and yours.</p>
 
         <section className="mt-8 rounded-3xl border border-line bg-white p-6">
           <h2 className="font-serif text-2xl">Your profile</h2>

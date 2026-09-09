@@ -25,11 +25,11 @@ export default function StoriesPage() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-10">
+      <div className="mx-auto max-w-6xl px-4 py-4 lg:px-10 lg:py-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">Stories</h1>
-            <p className="mt-2 text-sm text-soft">A digital family scrapbook, not a filing cabinet.</p>
+            <h1 className="hidden font-serif text-4xl text-charcoal lg:block">Stories</h1>
+            <p className="text-sm text-soft lg:mt-2">A digital family scrapbook, not a filing cabinet.</p>
           </div>
           <Button onClick={() => (canEdit ? setOpen(true) : openSignInPrompt())}>Write a story</Button>
         </div>

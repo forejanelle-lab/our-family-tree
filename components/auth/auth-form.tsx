@@ -13,6 +13,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
   const searchParams = useSearchParams();
   const signIn = useAuthStore((s) => s.signIn);
   const signUp = useAuthStore((s) => s.signUp);
+  const hydrated = useAuthStore((s) => s.hydrated);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,21 +66,21 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
         </p>
       </aside>
 
-      <div className="flex items-center justify-center bg-cream px-5 py-10 sm:px-6 sm:py-12">
+      <div className="flex items-center justify-center bg-cream px-5 py-10 pt-[max(2.5rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-12">
         <div className="w-full max-w-[400px]">
-          <Link href="/" className="mb-10 flex items-center gap-2.5 lg:hidden">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sage text-forest">
+          <Link href="/" className="mb-8 flex items-center gap-2.5 lg:hidden">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-sage text-forest">
               <LeafMark className="h-5 w-5" />
             </span>
-            <span className="font-serif text-xl text-charcoal">Our Family Tree</span>
+            <span className="font-serif text-xl text-charcoal">Family Tree</span>
           </Link>
-          <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">
+          <h1 className="font-serif text-[2rem] leading-tight text-charcoal sm:text-4xl">
             {isSignUp ? "Create your archive" : "Welcome back"}
           </h1>
           <p className="mt-2 text-sm text-soft">
             {isSignUp
               ? "Start a new tree, or join one you were invited to."
-              : "Sign in to continue your family story."}
+              : "Use the same email and password you created. We’ll keep this account on your phone."}
           </p>
 
           <form className="mt-8 space-y-4" onSubmit={onSubmit}>
@@ -158,7 +159,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
                 {error}
               </p>
             ) : null}
-            <Button type="submit" size="lg" className="w-full" disabled={pending}>
+            <Button type="submit" size="lg" className="w-full" disabled={pending || !hydrated}>
               {pending ? "Please wait…" : isSignUp ? "Create account" : "Sign in"}
             </Button>
           </form>

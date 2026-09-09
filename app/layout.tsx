@@ -17,6 +17,19 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "Our Family Tree",
   description: "A beautiful place to create, explore, and preserve your family story.",
+  applicationName: "Family Tree",
+  appleWebApp: {
+    capable: true,
+    title: "Family Tree",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: "/app-icon.svg",
+    apple: "/app-icon.svg",
+  },
 };
 
 export const viewport: Viewport = {

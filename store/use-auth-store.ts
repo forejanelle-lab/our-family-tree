@@ -10,6 +10,44 @@ import {
   type AuthUser,
   type StoredAccount,
 } from "@/lib/auth";
+
+function mergeAccounts(left: StoredAccount[], right: StoredAccount[]) {
+  const byEmail = new Map<string, StoredAccount>();
+  for (const account of [...left, ...right]) byEmail.set(account.email, account);
+  return [...byEmail.values()];
+}
+
+async function waitForAuthHydration() {
+  if (useAuthStore.persist.hasHydrated()) return;
+  await new Promise<void>((resolve) => {
+    const unsub = useAuthStore.persist.onFinishHydration(() => {
+      unsub();
+      resolve();
+    });
+    void useAuthStore.persist.rehydrate();
+  });
+}
+
+async function syncAccountToServer(
+  path: "/api/auth/signin" | "/api/auth/signup",
+  payload: Record<string, string>,
+) {
+  try {
+    const response = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return (await response.json()) as {
+      ok: boolean;
+      error?: string;
+      account?: StoredAccount;
+      user?: AuthUser;
+    };
+  } catch {
+    return { ok: false, error: "Could not reach the archive." };
+  }
+}
 import { findTreeByEditCode, findTreeByInviteCode, matchesViewPasscode } from "@/lib/invites";
 import { newId } from "@/lib/format";
 import { WILLIAMS_TREE } from "@/lib/mock-data";
@@ -82,33 +120,68 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signIn: async (email, password) => {
-        const accounts = await withDemoAccount(get().accounts);
-        set({ accounts });
+        await waitForAuthHydration();
         const normalized = normalizeEmail(email);
-        const account = accounts.find((item) => item.email === normalized);
-        if (!account) return { ok: false, error: "No account found for that email." };
-        const passwordHash = await hashPassword(password);
-        if (passwordHash !== account.passwordHash) {
+        if (!normalized.includes("@")) return { ok: false, error: "Please use a valid email." };
+        if (password.length < 8) return { ok: false, error: "Use at least 8 characters." };
+
+        const remote = await syncAccountToServer("/api/auth/signin", {
+          email: normalized,
+          password,
+          name: firstNameFrom(normalized.split("@")[0] || "Family"),
+        });
+        if (remote.error === "That password doesn’t match.") {
+          return { ok: false, error: remote.error };
+        }
+
+        let accounts = await withDemoAccount(get().accounts);
+        let account = accounts.find((item) => item.email === normalized) ?? remote.account ?? null;
+
+        if (remote.ok && remote.account) {
+          accounts = mergeAccounts(accounts, [remote.account]);
+          account = remote.account;
+        }
+
+        if (!account) {
+          account = {
+            id: newId("user"),
+            name: firstNameFrom(normalized.split("@")[0] || "Family"),
+            email: normalized,
+            passwordHash: await hashPassword(password),
+            createdAt: new Date().toISOString(),
+            role: "owner",
+          };
+          accounts = mergeAccounts(accounts, [account]);
+        } else if (account.passwordHash !== (await hashPassword(password))) {
           return { ok: false, error: "That password doesn’t match." };
         }
+
         const user = toUser(account);
         useTreeStore.getState().setUserName(firstNameFrom(user.name));
         if (user.role === "editor" || account.email === DEMO_EMAIL) {
           useTreeStore.getState().loadWilliamsTree();
         }
-        set({ user, guestView: false, role: user.role, signInPromptOpen: false });
+        set({ accounts, user, guestView: false, role: user.role, signInPromptOpen: false });
         return { ok: true };
       },
 
       signUp: async (name, email, password, joinCode) => {
+        await waitForAuthHydration();
         const trimmedName = name.trim();
         const normalized = normalizeEmail(email);
         if (!trimmedName) return { ok: false, error: "Please add your name." };
         if (!normalized.includes("@")) return { ok: false, error: "Please use a valid email." };
         if (password.length < 8) return { ok: false, error: "Use at least 8 characters." };
         const accounts = await withDemoAccount(get().accounts);
-        if (accounts.some((item) => item.email === normalized)) {
-          return { ok: false, error: "An account already exists for that email." };
+        const existing = accounts.find((item) => item.email === normalized);
+        if (existing) {
+          if (existing.passwordHash !== (await hashPassword(password))) {
+            return { ok: false, error: "An account already exists for that email." };
+          }
+          const user = toUser(existing);
+          useTreeStore.getState().setUserName(firstNameFrom(user.name));
+          set({ accounts, user, guestView: false, role: user.role, signInPromptOpen: false });
+          return { ok: true };
         }
 
         let role: AccessRole = "owner";
@@ -131,9 +204,23 @@ export const useAuthStore = create<AuthState>()(
           createdAt: new Date().toISOString(),
           role,
         };
+        await syncAccountToServer("/api/auth/signup", {
+          name: trimmedName,
+          email: normalized,
+          password,
+          role,
+          id: account.id,
+          createdAt: account.createdAt,
+        });
         const user = toUser(account);
         useTreeStore.getState().setUserName(firstNameFrom(user.name));
-        set({ accounts: [...accounts, account], user, guestView: false, role, signInPromptOpen: false });
+        set({
+          accounts: mergeAccounts(accounts, [account]),
+          user,
+          guestView: false,
+          role,
+          signInPromptOpen: false,
+        });
         return { ok: true };
       },
 
@@ -172,6 +259,14 @@ export const useAuthStore = create<AuthState>()(
         guestView: state.guestView,
         role: state.role,
       }),
+      merge: (persisted, current) => {
+        const saved = (persisted || {}) as Partial<AuthState>;
+        return {
+          ...current,
+          ...saved,
+          accounts: mergeAccounts(current.accounts, saved.accounts || []),
+        };
+      },
     },
   ),
 );

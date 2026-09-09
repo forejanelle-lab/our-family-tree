@@ -32,11 +32,11 @@ export function PhotoGallery() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-10">
+      <div className="mx-auto max-w-6xl px-4 py-4 lg:px-10 lg:py-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">Photos</h1>
-            <p className="mt-2 text-sm text-soft">Portraits, gatherings, and the pictures that hold a house together.</p>
+            <h1 className="hidden font-serif text-4xl text-charcoal lg:block">Photos</h1>
+            <p className="text-sm text-soft lg:mt-2">Portraits, gatherings, and the pictures that hold a house together.</p>
           </div>
           <Button onClick={() => (canEdit ? setUploadOpen(true) : openSignInPrompt())}>Upload photo</Button>
         </div>
