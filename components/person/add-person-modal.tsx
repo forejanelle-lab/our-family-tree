@@ -175,7 +175,7 @@ export function AddPersonModal() {
               <button
                 key={item.id}
                 type="button"
-                className="rounded-2xl border border-line bg-white px-4 py-3 text-left text-sm hover:border-forest hover:bg-sage-soft"
+                className="min-h-14 rounded-2xl border border-line bg-white px-4 py-3 text-left text-sm hover:border-forest hover:bg-sage-soft"
                 onClick={() => {
                   setConnection(item.id === "spouse" ? "spouse" : item.id);
                   setStep("form");

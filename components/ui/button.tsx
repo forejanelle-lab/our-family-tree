@@ -89,7 +89,7 @@ export function TextInput({ className, ...props }: React.InputHTMLAttributes<HTM
   return (
     <input
       className={cn(
-        "h-11 w-full rounded-xl border border-line bg-white px-3.5 text-sm text-charcoal placeholder:text-soft/70 transition-colors hover:border-[#d4d0c8] focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15",
+        "h-11 w-full rounded-xl border border-line bg-white px-3.5 text-base text-charcoal placeholder:text-soft/70 transition-colors hover:border-[#d4d0c8] focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15 sm:text-sm",
         className,
       )}
       {...props}
@@ -101,7 +101,7 @@ export function TextArea({ className, ...props }: React.TextareaHTMLAttributes<H
   return (
     <textarea
       className={cn(
-        "min-h-[120px] w-full rounded-xl border border-line bg-white px-3.5 py-3 text-sm text-charcoal placeholder:text-soft/70 transition-colors hover:border-[#d4d0c8] focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15",
+        "min-h-[120px] w-full rounded-xl border border-line bg-white px-3.5 py-3 text-base text-charcoal placeholder:text-soft/70 transition-colors hover:border-[#d4d0c8] focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15 sm:text-sm",
         className,
       )}
       {...props}
@@ -113,7 +113,7 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
   return (
     <select
       className={cn(
-        "h-11 w-full rounded-xl border border-line bg-white px-3.5 text-sm text-charcoal focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15",
+        "h-11 w-full rounded-xl border border-line bg-white px-3.5 text-base text-charcoal focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/15 sm:text-sm",
         className,
       )}
       {...props}

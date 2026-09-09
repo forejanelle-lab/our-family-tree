@@ -35,11 +35,11 @@ export function PeopleDirectory() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="mx-auto max-w-6xl px-6 py-8 sm:px-10">
-        <h1 className="font-serif text-4xl text-charcoal">People</h1>
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-10">
+        <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">People</h1>
         <p className="mt-2 text-sm text-soft">{people.length} family members</p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <div className="min-w-[220px] flex-1">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="w-full sm:min-w-[220px] sm:flex-1">
             <TextInput
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -48,7 +48,7 @@ export function PeopleDirectory() {
             />
           </div>
           <select
-            className="h-11 rounded-xl border border-line bg-white px-3 text-sm"
+            className="h-11 w-full rounded-xl border border-line bg-white px-3 text-base sm:w-auto sm:text-sm"
             value={generation}
             onChange={(e) => setGeneration(e.target.value)}
             aria-label="Filter by generation"
@@ -61,7 +61,7 @@ export function PeopleDirectory() {
             ))}
           </select>
           <select
-            className="h-11 rounded-xl border border-line bg-white px-3 text-sm"
+            className="h-11 w-full rounded-xl border border-line bg-white px-3 text-base sm:w-auto sm:text-sm"
             value={branch}
             onChange={(e) => setBranch(e.target.value)}
             aria-label="Filter by family branch"
@@ -74,7 +74,7 @@ export function PeopleDirectory() {
             ))}
           </select>
           <select
-            className="h-11 rounded-xl border border-line bg-white px-3 text-sm"
+            className="h-11 w-full rounded-xl border border-line bg-white px-3 text-base sm:w-auto sm:text-sm"
             value={sort}
             onChange={(e) => setSort(e.target.value as "name" | "birth")}
             aria-label="Sort people"

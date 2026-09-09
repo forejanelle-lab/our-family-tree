@@ -18,8 +18,8 @@ export default function SettingsPage() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="mx-auto max-w-2xl px-6 py-8 sm:px-10">
-        <h1 className="font-serif text-4xl text-charcoal">Settings</h1>
+      <div className="mx-auto max-w-2xl px-4 py-8 sm:px-10">
+        <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">Settings</h1>
         <p className="mt-2 text-sm text-soft">Keep the archive warm, private, and yours.</p>
 
         <section className="mt-8 rounded-3xl border border-line bg-white p-6">
@@ -50,11 +50,11 @@ export default function SettingsPage() {
               ["hidePrivateNotes", "Hide private notes"],
               ["hidePhotosPublic", "Hide photos from shared links"],
             ].map(([key, label]) => (
-              <label key={key} className="flex items-center justify-between gap-3 rounded-xl bg-cream px-3 py-3 text-sm">
+              <label key={key} className="flex min-h-12 items-center justify-between gap-3 rounded-xl bg-cream px-3 py-3 text-sm">
                 <span>{label}</span>
                 <input
                   type="checkbox"
-                  className="h-4 w-4 accent-forest"
+                  className="h-5 w-5 accent-forest"
                   checked={Boolean(tree[key as keyof typeof tree])}
                   onChange={(event) => updateTree({ [key]: event.target.checked })}
                 />

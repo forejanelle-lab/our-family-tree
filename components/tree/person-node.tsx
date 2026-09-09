@@ -53,41 +53,48 @@ export function PersonNode({ data }: NodeProps<PersonFlowNode>) {
         </h3>
         <p className="mt-1 text-[12px] text-soft">{lifespan(person)}</p>
       </div>
-      <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 flex -translate-x-1/2 gap-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100">
+      <div
+        className={cn(
+          "absolute left-1/2 top-full z-20 mt-2 flex -translate-x-1/2 gap-1 transition-opacity duration-150",
+          selected
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100",
+        )}
+      >
         {data.canEdit ? (
           <button
             type="button"
-            className="flex items-center gap-1 rounded-full border border-line bg-white px-2.5 py-1 text-[11px] text-charcoal shadow-sm hover:border-forest"
+            className="flex h-10 items-center gap-1 rounded-full border border-line bg-white px-3 text-xs text-charcoal shadow-sm hover:border-forest"
             onClick={(event) => {
               event.stopPropagation();
               data.onAddRelative(person.id);
             }}
           >
-            <Plus className="h-3 w-3" />
-            Add relative
+            <Plus className="h-3.5 w-3.5" />
+            Add
           </button>
         ) : null}
         <button
           type="button"
-          className="flex h-7 w-7 items-center justify-center rounded-full border border-line bg-white text-soft shadow-sm hover:text-charcoal"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-soft shadow-sm hover:text-charcoal"
           aria-label={`View ${cardName(person)}`}
           onClick={(event) => {
             event.stopPropagation();
             data.onSelect(person.id);
           }}
         >
-          <Eye className="h-3 w-3" />
+          <Eye className="h-3.5 w-3.5" />
         </button>
         <button
           type="button"
-          className="flex h-7 w-7 items-center justify-center rounded-full border border-line bg-white text-soft shadow-sm hover:text-charcoal"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-soft shadow-sm hover:text-charcoal"
           aria-label={`Edit ${cardName(person)}`}
           onClick={(event) => {
             event.stopPropagation();
             data.onEdit(person.id);
           }}
         >
-          <Pencil className="h-3 w-3" />
+          <Pencil className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>

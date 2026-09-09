@@ -47,7 +47,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby="modal-title"
         className={cn(
-          "relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-cream shadow-[var(--shadow-soft)] scale-in sm:rounded-3xl",
+          "relative z-10 flex max-h-[min(92vh,calc(100dvh-env(safe-area-inset-bottom)))] w-full flex-col overflow-hidden rounded-t-3xl bg-cream pb-[env(safe-area-inset-bottom)] shadow-[var(--shadow-soft)] scale-in sm:rounded-3xl sm:pb-0",
           wide ? "sm:max-w-3xl" : "sm:max-w-xl",
         )}
       >
@@ -61,7 +61,7 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-soft hover:bg-white hover:text-charcoal"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-soft hover:bg-white hover:text-charcoal"
             aria-label="Close"
           >
             <X className="h-4 w-4" />

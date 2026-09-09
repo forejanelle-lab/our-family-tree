@@ -84,12 +84,12 @@ export function ShareModal() {
           ["View passcode", tree.viewPasscode, "Asked after the invite code. Look, don’t edit."],
           ["Join code", tree.editCode, "Used when creating an account to join and edit."],
         ].map(([label, value, hint]) => (
-          <div key={label} className="flex items-start justify-between gap-3">
+          <div key={label} className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
             <div>
               <p className="text-sm text-charcoal">{label}</p>
               <p className="text-xs text-soft">{hint}</p>
             </div>
-            <code className="rounded-lg bg-white px-2 py-1 text-xs tracking-wide">{value}</code>
+            <code className="w-fit rounded-lg bg-white px-2 py-1 text-xs tracking-wide">{value}</code>
           </div>
         ))}
       </div>
@@ -102,11 +102,11 @@ export function ShareModal() {
           ["hidePrivateNotes", "Private notes"],
           ["hidePhotosPublic", "Photos"],
         ].map(([key, label]) => (
-          <label key={key} className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 text-sm">
+          <label key={key} className="flex min-h-12 items-center justify-between gap-3 rounded-xl bg-white px-3 py-3 text-sm">
             <span>{label}</span>
             <input
               type="checkbox"
-              className="h-4 w-4 accent-forest"
+              className="h-5 w-5 accent-forest"
               checked={Boolean(tree[key as keyof typeof tree])}
               onChange={(event) => updateTree({ [key]: event.target.checked })}
             />

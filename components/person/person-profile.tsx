@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MoreHorizontal, Pencil, X } from "lucide-react";
+import { MoreHorizontal, Pencil, Plus, X } from "lucide-react";
 import { PersonAvatar } from "@/components/person/person-avatar";
 import { PhotoUploader } from "@/components/person/photo-uploader";
 import { Button, Field, TextArea, TextInput } from "@/components/ui/button";
@@ -41,7 +41,7 @@ function RelList({
             key={person.id}
             type="button"
             onClick={() => onSelect(person.id)}
-            className="flex w-full items-center gap-3 rounded-xl px-1 py-1 text-left hover:bg-cream"
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-1 py-2 text-left hover:bg-cream"
           >
             <PersonAvatar person={person} size="sm" />
             <span className="text-sm text-charcoal">{displayName(person)}</span>
@@ -62,6 +62,7 @@ export function PersonProfile({ mobile = false }: { mobile?: boolean }) {
   const tab = useTreeStore((s) => s.profileTab);
   const setProfileTab = useTreeStore((s) => s.setProfileTab);
   const closeProfile = useTreeStore((s) => s.closeProfile);
+  const openAddPerson = useTreeStore((s) => s.openAddPerson);
   const selectPerson = useTreeStore((s) => s.selectPerson);
   const updatePerson = useTreeStore((s) => s.updatePerson);
   const deletePerson = useTreeStore((s) => s.deletePerson);
@@ -100,20 +101,31 @@ export function PersonProfile({ mobile = false }: { mobile?: boolean }) {
       className={cn(
         "flex h-full flex-col border-line bg-white",
         mobile
-          ? "max-h-[78vh] rounded-t-3xl border-t shadow-[var(--shadow-soft)] bottom-sheet-in"
+          ? "max-h-[min(82vh,calc(100dvh-env(safe-area-inset-bottom)))] rounded-t-3xl border-t pb-[env(safe-area-inset-bottom)] shadow-[var(--shadow-soft)] bottom-sheet-in"
           : "border-l sheet-in",
       )}
     >
-      <div className="flex items-start justify-between px-5 pt-5">
+      <div className="flex flex-wrap items-start justify-between gap-2 px-4 pt-4 sm:px-5 sm:pt-5">
         <button
           type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-full text-soft hover:bg-cream lg:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-soft hover:bg-cream lg:hidden"
           onClick={closeProfile}
           aria-label="Close profile"
         >
           <X className="h-4 w-4" />
         </button>
         <div className="ml-auto flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() =>
+              canEdit ? openAddPerson({ anchorId: person.id }) : openSignInPrompt()
+            }
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Add relative</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
           <Button
             size="sm"
             variant="secondary"
@@ -125,7 +137,7 @@ export function PersonProfile({ mobile = false }: { mobile?: boolean }) {
           <div className="relative">
             <button
               type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-soft hover:bg-cream"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-soft hover:bg-cream"
               aria-label="More actions"
               onClick={() => (canEdit ? setMenuOpen((v) => !v) : openSignInPrompt())}
             >
@@ -135,7 +147,7 @@ export function PersonProfile({ mobile = false }: { mobile?: boolean }) {
               <div className="absolute right-0 z-10 mt-1 w-40 rounded-xl border border-line bg-white p-1 shadow-[var(--shadow-soft)]">
                 <button
                   type="button"
-                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50"
+                  className="block min-h-11 w-full rounded-lg px-3 py-2.5 text-left text-sm text-red-700 hover:bg-red-50"
                   onClick={() => {
                     deletePerson(person.id);
                     setMenuOpen(false);
@@ -148,7 +160,7 @@ export function PersonProfile({ mobile = false }: { mobile?: boolean }) {
           </div>
           <button
             type="button"
-            className="hidden h-8 w-8 items-center justify-center rounded-full text-soft hover:bg-cream lg:flex"
+            className="hidden h-11 w-11 items-center justify-center rounded-full text-soft hover:bg-cream lg:flex"
             onClick={closeProfile}
             aria-label="Close profile"
           >
@@ -163,14 +175,14 @@ export function PersonProfile({ mobile = false }: { mobile?: boolean }) {
         <p className="mt-1 text-sm text-soft">{lifespan(person)}</p>
       </div>
 
-      <div className="flex gap-1 px-4">
+      <div className="flex gap-1 px-3 sm:px-4">
         {tabs.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setProfileTab(item.id)}
             className={cn(
-              "flex-1 rounded-full px-2 py-1.5 text-xs",
+              "min-h-11 flex-1 rounded-full px-2 py-2 text-xs sm:text-sm",
               tab === item.id ? "bg-sage-soft font-medium text-forest" : "text-soft hover:text-charcoal",
             )}
           >

@@ -32,10 +32,10 @@ export function PhotoGallery() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="mx-auto max-w-6xl px-6 py-8 sm:px-10">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="font-serif text-4xl text-charcoal">Photos</h1>
+            <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">Photos</h1>
             <p className="mt-2 text-sm text-soft">Portraits, gatherings, and the pictures that hold a house together.</p>
           </div>
           <Button onClick={() => (canEdit ? setUploadOpen(true) : openSignInPrompt())}>Upload photo</Button>
@@ -63,14 +63,14 @@ export function PhotoGallery() {
       </div>
 
       {active ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
           <button type="button" className="absolute inset-0 bg-charcoal/40" aria-label="Close photo" onClick={() => setActiveId(null)} />
-          <div className="relative z-10 max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-cream shadow-[var(--shadow-soft)]">
+          <div className="relative z-10 max-h-[min(92vh,calc(100dvh-env(safe-area-inset-bottom)))] w-full max-w-3xl overflow-y-auto rounded-t-3xl bg-cream pb-[env(safe-area-inset-bottom)] shadow-[var(--shadow-soft)] sm:rounded-3xl sm:pb-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={active.url} alt={active.caption} className="max-h-[50vh] w-full object-cover" />
+            <img src={active.url} alt={active.caption} className="max-h-[40vh] w-full object-cover sm:max-h-[50vh]" />
             <button
               type="button"
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90"
+              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/90"
               onClick={() => setActiveId(null)}
               aria-label="Close"
             >

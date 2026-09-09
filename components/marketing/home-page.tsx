@@ -54,37 +54,43 @@ export function MarketingHome() {
 
   return (
     <div className="home-canvas min-h-dvh">
-      <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-forest shadow-[var(--shadow-card)] ring-1 ring-line">
+      <header className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:py-6">
+        <Link href="/" className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-forest shadow-[var(--shadow-card)] ring-1 ring-line">
             <LeafMark className="h-5 w-5" />
           </span>
-          <span className="font-serif text-[22px] tracking-tight text-charcoal">Our Family Tree</span>
+          <span className="font-serif text-lg tracking-tight text-charcoal sm:hidden">Family Tree</span>
+          <span className="hidden font-serif text-[22px] tracking-tight text-charcoal sm:inline">Our Family Tree</span>
         </Link>
-        <nav className="flex min-h-10 items-center gap-2">
+        <nav className="flex shrink-0 items-center gap-1 sm:gap-2">
           {!hydrated ? null : signedIn ? (
-            <ButtonLink href="/home">Open your tree</ButtonLink>
+            <ButtonLink href="/home" size="sm" className="sm:h-10 sm:px-4 sm:text-sm">
+              Open your tree
+            </ButtonLink>
           ) : (
             <>
-              <ButtonLink href="/login" variant="ghost">
+              <ButtonLink href="/login" variant="ghost" size="sm" className="sm:h-10 sm:px-4 sm:text-sm">
                 Sign in
               </ButtonLink>
-              <ButtonLink href="/signup">Create account</ButtonLink>
+              <ButtonLink href="/signup" size="sm" className="sm:h-10 sm:px-4 sm:text-sm">
+                <span className="sm:hidden">Join</span>
+                <span className="hidden sm:inline">Create account</span>
+              </ButtonLink>
             </>
           )}
         </nav>
       </header>
 
-      <section className="mx-auto flex min-h-[calc(100dvh-88px)] max-w-5xl flex-col justify-center px-6 pb-20 pt-8">
+      <section className="mx-auto flex min-w-0 max-w-5xl flex-col justify-center px-5 pb-16 pt-6 sm:min-h-[calc(100dvh-88px)] sm:px-6 sm:pb-20 sm:pt-8">
         <div className="mb-6 h-px w-12 bg-gold" />
         <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-forest">A private family archive</p>
-        <h1 className="mt-5 font-serif text-5xl leading-[1.08] text-charcoal sm:text-6xl lg:text-[5.25rem] lg:leading-[1.05]">
+        <h1 className="mt-4 min-w-0 max-w-full text-balance break-words font-serif text-4xl leading-[1.12] text-charcoal sm:mt-5 sm:text-6xl lg:text-[5.25rem] lg:leading-[1.05]">
           Keep them close to home.
         </h1>
-        <p className="mt-8 max-w-3xl text-lg leading-relaxed text-soft sm:text-xl">
+        <p className="mt-6 max-w-3xl text-base leading-relaxed text-soft sm:mt-8 sm:text-xl">
           Portraits, stories, and the quiet line from one generation to the next — held in a place that feels like an album, not software. Build a living tree. Add a parent, a partner, a child. Write the stories no one else thinks to write down. Keep living relatives private until you decide otherwise.
         </p>
-        <p className="mt-6 max-w-3xl text-lg leading-relaxed text-soft sm:text-xl">
+        <p className="mt-4 max-w-3xl text-base leading-relaxed text-soft sm:mt-6 sm:text-xl">
           See everyone at once. Join with a code. Look without an account, or sign in when you are ready to change the archive. One name is enough to begin. Then the tree takes shape.
         </p>
         <div className="mt-10 flex flex-wrap gap-3">
@@ -102,7 +108,7 @@ export function MarketingHome() {
         {!signedIn ? (
           <form
             onSubmit={onInviteSubmit}
-            className="mt-14 w-full rounded-[28px] border border-line bg-white/80 p-6 shadow-[var(--shadow-card)] backdrop-blur-sm sm:p-8"
+            className="mt-10 w-full rounded-[28px] border border-line bg-white/80 p-5 shadow-[var(--shadow-card)] backdrop-blur-sm sm:mt-14 sm:p-8"
           >
             <p className="font-serif text-2xl text-charcoal">Have an invite code?</p>
             <p className="mt-2 text-base text-soft">
@@ -127,8 +133,8 @@ export function MarketingHome() {
       </section>
 
       <section className="border-t border-line bg-white/70">
-        <div className="mx-auto max-w-5xl px-6 py-20">
-          <div className="grid gap-14 sm:grid-cols-3">
+        <div className="mx-auto max-w-5xl px-5 py-16 sm:px-6 sm:py-20">
+          <div className="grid gap-12 sm:grid-cols-2 sm:gap-14 lg:grid-cols-3">
             {[
               {
                 title: "See the whole house",
@@ -145,7 +151,7 @@ export function MarketingHome() {
             ].map((item) => (
               <article key={item.title}>
                 <div className="mb-4 h-px w-8 bg-gold" />
-                <h2 className="font-serif text-3xl text-charcoal">{item.title}</h2>
+                <h2 className="font-serif text-[1.75rem] text-charcoal sm:text-3xl">{item.title}</h2>
                 <p className="mt-4 text-base leading-relaxed text-soft">{item.copy}</p>
               </article>
             ))}
@@ -161,7 +167,7 @@ export function MarketingHome() {
         </div>
       </section>
 
-      <footer className="border-t border-line px-6 py-8">
+      <footer className="border-t border-line px-5 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 text-sm text-soft">
           <p className="font-serif text-base text-charcoal">Our Family Tree</p>
           <div className="flex gap-4">

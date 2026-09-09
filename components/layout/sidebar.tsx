@@ -27,7 +27,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const items = guestView ? NAV.filter((item) => item.href !== "/home" && item.href !== "/settings") : NAV;
 
   return (
-    <aside className="flex h-full w-[232px] shrink-0 flex-col border-r border-line bg-white">
+    <aside className="flex h-full w-[min(232px,85vw)] shrink-0 flex-col border-r border-line bg-white">
       <Link href={guestView ? "/tree" : "/home"} className="flex items-center gap-2.5 px-5 pb-6 pt-7" onClick={onNavigate}>
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sage text-forest">
           <LeafMark className="h-5 w-5" />
@@ -47,7 +47,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
+                "flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors lg:min-h-0 lg:py-2.5",
                 active
                   ? "bg-sage-soft font-medium text-forest"
                   : "text-soft hover:bg-cream hover:text-charcoal",
@@ -61,7 +61,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <div className="p-4">
+      <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="rounded-2xl border border-line bg-cream px-4 py-4">
           <LeafMark className="mb-3 h-5 w-5 text-forest" />
           <p className="font-serif text-lg leading-snug text-charcoal">
@@ -77,7 +77,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             </p>
             <button
               type="button"
-              className="flex items-center gap-1 text-xs text-soft hover:text-charcoal"
+              className="flex min-h-11 items-center gap-1 text-xs text-soft hover:text-charcoal"
               onClick={() => {
                 signOut();
                 onNavigate?.();

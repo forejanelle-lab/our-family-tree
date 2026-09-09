@@ -146,15 +146,21 @@ function TreeCanvas() {
 
   return (
     <div className="flex h-full min-h-0">
-      <div className="relative h-full min-w-0 flex-1">
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col items-start justify-between gap-4 p-4 sm:flex-row sm:p-7">
-          <div>
-            <h1 className="font-serif text-3xl tracking-tight text-charcoal sm:text-4xl">
+      <div className="relative h-full min-w-0 flex-1 overscroll-none">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col items-start justify-between gap-3 p-3 sm:flex-row sm:gap-4 sm:p-7">
+          <div className="min-w-0">
+            <h1 className="truncate font-serif text-2xl tracking-tight text-charcoal sm:text-4xl">
               {tree?.name ?? "Your Family"}
             </h1>
-            <p className="mt-1 text-sm text-soft">
-              {gens} {gens === 1 ? "Generation" : "Generations"} · {people.length} {people.length === 1 ? "Person" : "People"}
+            <p className="mt-0.5 text-xs text-soft sm:mt-1 sm:text-sm">
+              {gens} {gens === 1 ? "Generation" : "Generations"} · {people.length}{" "}
+              {people.length === 1 ? "Person" : "People"}
             </p>
+            {guestView || !canEdit ? (
+              <div className="pointer-events-auto mt-2 sm:hidden">
+                <ViewOnlyBanner inline />
+              </div>
+            ) : null}
           </div>
           <div className="pointer-events-auto">
             <TreeControls
@@ -185,8 +191,18 @@ function TreeCanvas() {
         >
           <Background variant={BackgroundVariant.Dots} gap={22} size={1.4} color="#D7E3D8" />
         </ReactFlow>
-        {guestView || !canEdit ? <ViewOnlyBanner /> : null}
-        <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center">
+        {guestView || !canEdit ? (
+          <div className="hidden sm:block">
+            <ViewOnlyBanner />
+          </div>
+        ) : null}
+        <div
+          className={
+            profileOpen && selectedPersonId
+              ? "pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden justify-center px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] lg:flex"
+              : "pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+          }
+        >
           <div className="pointer-events-auto">
             <Button
               size="lg"

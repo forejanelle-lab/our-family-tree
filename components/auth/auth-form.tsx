@@ -65,7 +65,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
         </p>
       </aside>
 
-      <div className="flex items-center justify-center bg-cream px-6 py-12">
+      <div className="flex items-center justify-center bg-cream px-5 py-10 sm:px-6 sm:py-12">
         <div className="w-full max-w-[400px]">
           <Link href="/" className="mb-10 flex items-center gap-2.5 lg:hidden">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sage text-forest">
@@ -118,7 +118,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-soft hover:text-charcoal"
+                  className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-soft hover:text-charcoal"
                   onClick={() => setShowPassword((value) => !value)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >

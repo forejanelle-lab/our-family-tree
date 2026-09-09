@@ -184,6 +184,21 @@ body {
   }
 }
 
+.drawer-in {
+  animation: drawer-in 240ms ease;
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(-18px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 .bottom-sheet-in {
   animation: bottom-sheet-in 280ms ease;
 }

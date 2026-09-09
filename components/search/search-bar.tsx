@@ -6,7 +6,15 @@ import { Search } from "lucide-react";
 import { searchAll } from "@/lib/search";
 import { useTreeStore } from "@/store/use-tree-store";
 
-export function SearchBar() {
+export function SearchBar({
+  autoFocus,
+  compact,
+  onNavigate,
+}: {
+  autoFocus?: boolean;
+  compact?: boolean;
+  onNavigate?: () => void;
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const query = useTreeStore((s) => s.searchQuery);
@@ -23,6 +31,10 @@ export function SearchBar() {
     () => searchAll(query, { people, stories, photos, events }),
     [query, people, stories, photos, events],
   );
+
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -51,8 +63,8 @@ export function SearchBar() {
         value={query}
         onChange={(event) => setSearchQuery(event.target.value)}
         onFocus={() => query && setSearchOpen(true)}
-        placeholder="Search people, places, or events..."
-        className="h-11 w-full rounded-full border border-line bg-cream pl-10 pr-4 text-sm text-charcoal placeholder:text-soft/80 focus:border-forest focus:bg-white focus:outline-none focus:ring-2 focus:ring-forest/10"
+        placeholder={compact ? "Search..." : "Search people, places, or events..."}
+        className="h-11 w-full rounded-full border border-line bg-cream pl-10 pr-4 text-base text-charcoal placeholder:text-soft/80 focus:border-forest focus:bg-white focus:outline-none focus:ring-2 focus:ring-forest/10 sm:text-sm"
         aria-label="Search people, places, or events"
       />
       {searchOpen && query ? (
@@ -70,7 +82,7 @@ export function SearchBar() {
                     <button
                       key={hit.id}
                       type="button"
-                      className="flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-cream"
+                      className="flex min-h-11 w-full flex-col justify-center rounded-xl px-3 py-2.5 text-left hover:bg-cream"
                       onClick={() => {
                         if (hit.personId) {
                           selectPerson(hit.personId);
@@ -80,6 +92,7 @@ export function SearchBar() {
                         }
                         setSearchOpen(false);
                         setSearchQuery("");
+                        onNavigate?.();
                       }}
                     >
                       <span className="text-sm text-charcoal">{hit.title}</span>

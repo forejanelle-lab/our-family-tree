@@ -17,8 +17,8 @@ export default function ImportPage() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <div className="mx-auto max-w-4xl px-6 py-8 sm:px-10">
-        <h1 className="font-serif text-4xl text-charcoal">Import family tree</h1>
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-10">
+        <h1 className="font-serif text-3xl text-charcoal sm:text-4xl">Import family tree</h1>
         <p className="mt-2 text-sm text-soft">Bring a CSV or GEDCOM file into a calm, visual tree.</p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -61,7 +61,8 @@ export default function ImportPage() {
         </div>
 
         <div className="mt-8 overflow-hidden rounded-3xl border border-line bg-white">
-          <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto scrollbar-thin">
+          <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="bg-cream text-[11px] uppercase tracking-[0.12em] text-soft">
               <tr>
                 <th className="px-4 py-3 font-medium">Name</th>
@@ -81,6 +82,7 @@ export default function ImportPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">

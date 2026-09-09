@@ -22,8 +22,8 @@ export default function StoryDetailPage() {
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
-      <article className="mx-auto max-w-3xl px-6 py-10">
-        <button type="button" className="text-sm text-soft hover:text-charcoal" onClick={() => router.push("/stories")}>
+      <article className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+        <button type="button" className="min-h-11 text-sm text-soft hover:text-charcoal" onClick={() => router.push("/stories")}>
           ← All stories
         </button>
         <p className="mt-6 text-xs uppercase tracking-[0.16em] text-gold">
