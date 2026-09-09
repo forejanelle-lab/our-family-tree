@@ -157,10 +157,8 @@ export const useAuthStore = create<AuthState>()(
         }
 
         const user = toUser(account);
+        await waitForTreeHydration();
         useTreeStore.getState().setUserName(firstNameFrom(user.name));
-        if (account.email === DEMO_EMAIL && useTreeStore.getState().people.length === 0) {
-          useTreeStore.getState().createEmptyTree();
-        }
         set({ accounts, user, guestView: false, role: user.role, signInPromptOpen: false });
         return { ok: true };
       },
@@ -184,6 +182,7 @@ export const useAuthStore = create<AuthState>()(
           return { ok: true };
         }
 
+        await waitForTreeHydration();
         let role: AccessRole = "owner";
         const code = joinCode?.trim();
         if (code) {
@@ -191,8 +190,6 @@ export const useAuthStore = create<AuthState>()(
           const tree = findTreeByEditCode(code, extra);
           if (!tree) return { ok: false, error: "That family join code isn’t valid." };
           role = "editor";
-        } else {
-          useTreeStore.getState().createEmptyTree();
         }
 
         const account: StoredAccount = {
@@ -249,9 +246,9 @@ export const useAuthStore = create<AuthState>()(
         const treeStore = useTreeStore.getState();
         if (treeStore.trees.some((item) => item.id === tree.id)) {
           treeStore.setActiveTreeId(tree.id);
-        } else if (tree.id === APONTE_TREE.id) {
+        } else if (treeStore.people.length === 0 && tree.id === APONTE_TREE.id) {
           treeStore.loadAponteTree();
-        } else if (tree.id === WILLIAMS_TREE.id) {
+        } else if (treeStore.people.length === 0 && tree.id === WILLIAMS_TREE.id) {
           treeStore.loadWilliamsTree();
         }
         set({ guestView: true, user: null, role: "viewer", signInPromptOpen: false });

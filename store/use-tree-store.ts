@@ -34,6 +34,7 @@ import type {
   Story,
 } from "@/lib/types";
 import { defaultPrivacy, emptyPersonDraft } from "@/lib/types";
+import { clearTreeBackup } from "@/lib/tree-backup";
 
 export type SaveState = "saved" | "saving" | "unsaved";
 export type ProfileTab = "details" | "photos" | "stories" | "events";
@@ -437,6 +438,7 @@ export const useTreeStore = create<TreeState>()(
       },
 
       createEmptyTree: () => {
+        clearTreeBackup();
         const tree = { ...EMPTY_TREE, id: newId("tree") };
         set({
           trees: [tree],
@@ -481,21 +483,21 @@ export const useTreeStore = create<TreeState>()(
     }),
     {
       name: "our-family-tree-v1",
-      version: 4,
+      version: 5,
       skipHydration: true,
       migrate: (persisted) => {
         const saved = (persisted || {}) as Partial<TreeState>;
         return {
-          trees: emptySnapshot.trees,
-          activeTreeId: emptySnapshot.activeTreeId,
-          people: [],
-          relationships: [],
-          photos: [],
-          stories: [],
-          events: [],
-          sources: [],
-          activity: [],
-          selectedPersonId: null,
+          trees: saved.trees?.length ? saved.trees : emptySnapshot.trees,
+          activeTreeId: saved.activeTreeId || emptySnapshot.activeTreeId,
+          people: saved.people || [],
+          relationships: saved.relationships || [],
+          photos: saved.photos || [],
+          stories: saved.stories || [],
+          events: saved.events || [],
+          sources: saved.sources || [],
+          activity: saved.activity || [],
+          selectedPersonId: saved.selectedPersonId ?? null,
           userName: saved.userName || "Janelle",
         };
       },
