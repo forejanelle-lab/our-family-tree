@@ -427,7 +427,39 @@ export const useTreeStore = create<TreeState>()(
     }),
     {
       name: "our-family-tree-v1",
+      version: 2,
       skipHydration: true,
+      migrate: (persisted) => {
+        const saved = (persisted || {}) as Partial<TreeState>;
+        if (!saved.people?.length) {
+          return {
+            trees: williamsSnapshot.trees,
+            activeTreeId: williamsSnapshot.activeTreeId,
+            people: williamsSnapshot.people,
+            relationships: williamsSnapshot.relationships,
+            photos: williamsSnapshot.photos,
+            stories: williamsSnapshot.stories,
+            events: williamsSnapshot.events,
+            sources: williamsSnapshot.sources,
+            activity: williamsSnapshot.activity,
+            selectedPersonId: williamsSnapshot.selectedPersonId,
+            userName: saved.userName || "Janelle",
+          };
+        }
+        return {
+          trees: saved.trees ?? williamsSnapshot.trees,
+          activeTreeId: saved.activeTreeId ?? williamsSnapshot.activeTreeId,
+          people: saved.people,
+          relationships: saved.relationships ?? [],
+          photos: saved.photos ?? [],
+          stories: saved.stories ?? [],
+          events: saved.events ?? [],
+          sources: saved.sources ?? [],
+          activity: saved.activity ?? [],
+          selectedPersonId: saved.selectedPersonId ?? null,
+          userName: saved.userName || "Janelle",
+        };
+      },
       partialize: (state) => ({
         trees: state.trees,
         activeTreeId: state.activeTreeId,

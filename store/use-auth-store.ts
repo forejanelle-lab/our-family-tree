@@ -158,7 +158,7 @@ export const useAuthStore = create<AuthState>()(
 
         const user = toUser(account);
         useTreeStore.getState().setUserName(firstNameFrom(user.name));
-        if (user.role === "editor" || account.email === DEMO_EMAIL) {
+        if (useTreeStore.getState().people.length === 0 || user.role === "editor" || account.email === DEMO_EMAIL) {
           useTreeStore.getState().loadWilliamsTree();
         }
         set({ accounts, user, guestView: false, role: user.role, signInPromptOpen: false });
@@ -192,8 +192,8 @@ export const useAuthStore = create<AuthState>()(
           if (!tree) return { ok: false, error: "That family join code isn’t valid." };
           role = "editor";
           if (tree.id === WILLIAMS_TREE.id) useTreeStore.getState().loadWilliamsTree();
-        } else {
-          useTreeStore.getState().createEmptyTree();
+        } else if (useTreeStore.getState().people.length === 0) {
+          useTreeStore.getState().loadWilliamsTree();
         }
 
         const account: StoredAccount = {
