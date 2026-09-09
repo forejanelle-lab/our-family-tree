@@ -24,10 +24,10 @@ export function MarketingHome() {
   const [passOpen, setPassOpen] = useState(false);
   const [pending, setPending] = useState(false);
 
-  function onInviteSubmit(event: React.FormEvent) {
+  async function onInviteSubmit(event: React.FormEvent) {
     event.preventDefault();
     setInviteError("");
-    const result = lookupInvite(inviteCode);
+    const result = await lookupInvite(inviteCode);
     if (!result.ok) {
       setInviteError(result.error);
       return;
@@ -123,7 +123,7 @@ export function MarketingHome() {
                 className="font-medium tracking-[0.12em]"
                 autoCapitalize="characters"
               />
-              <Button type="submit" className="w-full sm:w-auto sm:px-6">
+              <Button type="submit" className="w-full sm:w-auto sm:px-6" disabled={!hydrated}>
                 Continue
               </Button>
             </div>

@@ -144,7 +144,19 @@ export function PersonProfile({ mobile = false }: { mobile?: boolean }) {
               <MoreHorizontal className="h-4 w-4" />
             </button>
             {menuOpen ? (
-              <div className="absolute right-0 z-10 mt-1 w-40 rounded-xl border border-line bg-white p-1 shadow-[var(--shadow-soft)]">
+              <div className="absolute right-0 z-10 mt-1 w-52 rounded-xl border border-line bg-white p-1 shadow-[var(--shadow-soft)]">
+                {people.length > 1 ? (
+                  <button
+                    type="button"
+                    className="block min-h-11 w-full rounded-lg px-3 py-2.5 text-left text-sm text-charcoal hover:bg-cream"
+                    onClick={() => {
+                      openAddPerson({ anchorId: person.id, mode: "link" });
+                      setMenuOpen(false);
+                    }}
+                  >
+                    Link existing relative
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="block min-h-11 w-full rounded-lg px-3 py-2.5 text-left text-sm text-red-700 hover:bg-red-50"

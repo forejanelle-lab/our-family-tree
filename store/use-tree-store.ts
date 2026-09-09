@@ -40,6 +40,7 @@ export type ProfileTab = "details" | "photos" | "stories" | "events";
 export type AddPersonContext = {
   anchorId?: string;
   connection?: ConnectionChoice;
+  mode?: "create" | "link";
 } | null;
 
 interface TreeState {
@@ -70,6 +71,7 @@ interface TreeState {
   setUserName: (name: string) => void;
 
   setHydrated: (value: boolean) => void;
+  setActiveTreeId: (id: string) => void;
   selectPerson: (id: string | null, openProfile?: boolean) => void;
   setProfileTab: (tab: ProfileTab) => void;
   closeProfile: () => void;
@@ -82,6 +84,7 @@ interface TreeState {
   setFocusedPersonId: (id: string | null) => void;
   markSaving: () => void;
   addPersonWithConnection: (draft: PersonDraft, context?: AddPersonContext) => string;
+  linkExistingPerson: (existingPersonId: string, context: { anchorId: string; connection: ConnectionChoice }) => boolean;
   updatePerson: (id: string, patch: Partial<Person>) => void;
   deletePerson: (id: string) => void;
   addPhoto: (photo: Omit<Photo, "id" | "familyTreeId" | "uploadedAt">) => void;
@@ -281,6 +284,10 @@ export const useTreeStore = create<TreeState>()(
       setUserName: (name) => set({ userName: name }),
 
       setHydrated: (value) => set({ hydrated: value }),
+      setActiveTreeId: (id) => {
+        if (!get().trees.some((tree) => tree.id === id)) return;
+        set({ activeTreeId: id });
+      },
       selectPerson: (id, openProfile = true) =>
         set({
           selectedPersonId: id,
@@ -325,6 +332,34 @@ export const useTreeStore = create<TreeState>()(
         });
         touchSave(set);
         return person.id;
+      },
+
+      linkExistingPerson: (existingPersonId, context) => {
+        const { activeTreeId, people, relationships } = get();
+        if (!context.anchorId || !context.connection || context.connection === "other") return false;
+        if (existingPersonId === context.anchorId) return false;
+        if (!people.some((p) => p.id === existingPersonId) || !people.some((p) => p.id === context.anchorId)) {
+          return false;
+        }
+
+        const nextRels = applyConnection(
+          activeTreeId,
+          relationships,
+          existingPersonId,
+          context.anchorId,
+          context.connection,
+        );
+        set({
+          people: computeGenerations(people, nextRels),
+          relationships: nextRels,
+          selectedPersonId: existingPersonId,
+          profileOpen: true,
+          addPersonOpen: false,
+          addPersonContext: null,
+          onboardingStep: "none",
+        });
+        touchSave(set);
+        return true;
       },
 
       updatePerson: (id, patch) => {
@@ -483,4 +518,15 @@ export const useTreeStore = create<TreeState>()(
 
 export function useActiveTree() {
   return useTreeStore((s) => s.trees.find((t) => t.id === s.activeTreeId) ?? s.trees[0]);
+}
+
+export async function waitForTreeHydration() {
+  if (useTreeStore.persist.hasHydrated()) return;
+  await new Promise<void>((resolve) => {
+    const unsub = useTreeStore.persist.onFinishHydration(() => {
+      unsub();
+      resolve();
+    });
+    void useTreeStore.persist.rehydrate();
+  });
 }

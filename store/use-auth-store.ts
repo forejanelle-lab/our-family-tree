@@ -52,7 +52,7 @@ import { findTreeByEditCode, findTreeByInviteCode, matchesViewPasscode } from "@
 import { newId } from "@/lib/format";
 import { APONTE_TREE, WILLIAMS_TREE } from "@/lib/mock-data";
 import type { AccessRole } from "@/lib/types";
-import { useTreeStore } from "@/store/use-tree-store";
+import { useTreeStore, waitForTreeHydration } from "@/store/use-tree-store";
 
 interface AuthState {
   hydrated: boolean;
@@ -73,7 +73,7 @@ interface AuthState {
     joinCode?: string,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
   signInDemo: () => Promise<void>;
-  lookupInvite: (inviteCode: string) => { ok: true; name: string } | { ok: false; error: string };
+  lookupInvite: (inviteCode: string) => Promise<{ ok: true; name: string } | { ok: false; error: string }>;
   enterAsViewer: (
     inviteCode: string,
     passcode: string,
@@ -228,7 +228,9 @@ export const useAuthStore = create<AuthState>()(
         if (!result.ok) throw new Error(result.error);
       },
 
-      lookupInvite: (inviteCode) => {
+      lookupInvite: async (inviteCode) => {
+        await waitForAuthHydration();
+        await waitForTreeHydration();
         const extra = useTreeStore.getState().trees;
         const tree = findTreeByInviteCode(inviteCode, extra);
         if (!tree) return { ok: false, error: "We couldn’t find a tree with that invite code." };
@@ -236,14 +238,22 @@ export const useAuthStore = create<AuthState>()(
       },
 
       enterAsViewer: async (inviteCode, passcode) => {
+        await waitForAuthHydration();
+        await waitForTreeHydration();
         const extra = useTreeStore.getState().trees;
         const tree = findTreeByInviteCode(inviteCode, extra);
         if (!tree) return { ok: false, error: "We couldn’t find a tree with that invite code." };
         if (!matchesViewPasscode(tree, passcode)) {
           return { ok: false, error: "That passcode doesn’t match this family archive." };
         }
-        if (tree.id === APONTE_TREE.id) useTreeStore.getState().loadAponteTree();
-        if (tree.id === WILLIAMS_TREE.id) useTreeStore.getState().loadWilliamsTree();
+        const treeStore = useTreeStore.getState();
+        if (treeStore.trees.some((item) => item.id === tree.id)) {
+          treeStore.setActiveTreeId(tree.id);
+        } else if (tree.id === APONTE_TREE.id) {
+          treeStore.loadAponteTree();
+        } else if (tree.id === WILLIAMS_TREE.id) {
+          treeStore.loadWilliamsTree();
+        }
         set({ guestView: true, user: null, role: "viewer", signInPromptOpen: false });
         return { ok: true };
       },
@@ -265,6 +275,7 @@ export const useAuthStore = create<AuthState>()(
           ...current,
           ...saved,
           accounts: mergeAccounts(current.accounts, saved.accounts || []),
+          guestView: current.guestView || Boolean(saved.guestView),
         };
       },
     },

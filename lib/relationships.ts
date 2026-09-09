@@ -1,5 +1,5 @@
 import { childLabel, displayName } from "./format";
-import type { Person, Relationship, RelationshipType } from "./types";
+import type { ConnectionChoice, Person, Relationship, RelationshipType } from "./types";
 
 const PARENT_TYPES: RelationshipType[] = ["parent", "adoptive_parent", "step_parent"];
 
@@ -161,4 +161,32 @@ export function relationshipExists(
           r.personId === relatedPersonId &&
           r.relatedPersonId === personId)),
   );
+}
+
+export function connectionAlreadyExists(
+  relationships: Relationship[],
+  existingPersonId: string,
+  anchorId: string,
+  connection: ConnectionChoice,
+) {
+  switch (connection) {
+    case "parent":
+      return relationshipExists(relationships, existingPersonId, anchorId, "parent");
+    case "child":
+      return relationshipExists(relationships, anchorId, existingPersonId, "parent");
+    case "spouse":
+    case "partner":
+      return (
+        relationshipExists(relationships, anchorId, existingPersonId, "spouse") ||
+        relationshipExists(relationships, anchorId, existingPersonId, "partner")
+      );
+    case "sibling":
+      return getSiblings(anchorId, relationships).includes(existingPersonId);
+    case "grandparent":
+      return getGrandparents(anchorId, relationships).includes(existingPersonId);
+    case "grandchild":
+      return getGrandchildren(anchorId, relationships).includes(existingPersonId);
+    default:
+      return false;
+  }
 }

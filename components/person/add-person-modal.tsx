@@ -3,8 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button, Field, Select, TextArea, TextInput } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { PersonAvatar } from "@/components/person/person-avatar";
 import { PhotoUploader } from "@/components/person/photo-uploader";
-import { cardName } from "@/lib/format";
+import { cn } from "@/lib/cn";
+import { cardName, lifespan } from "@/lib/format";
+import { connectionAlreadyExists } from "@/lib/relationships";
 import type { ConnectionChoice, PersonDraft } from "@/lib/types";
 import { emptyPersonDraft } from "@/lib/types";
 import { useTreeStore } from "@/store/use-tree-store";
@@ -20,13 +23,16 @@ const CONNECTIONS: { id: ConnectionChoice; label: string }[] = [
 ];
 
 const QUICK: ConnectionChoice[] = ["parent", "spouse", "sibling", "child"];
+type AddStep = "connect" | "who" | "form" | "link";
 
 export function AddPersonModal() {
   const open = useTreeStore((s) => s.addPersonOpen);
   const context = useTreeStore((s) => s.addPersonContext);
   const closeAddPerson = useTreeStore((s) => s.closeAddPerson);
   const people = useTreeStore((s) => s.people);
+  const relationships = useTreeStore((s) => s.relationships);
   const addPersonWithConnection = useTreeStore((s) => s.addPersonWithConnection);
+  const linkExistingPerson = useTreeStore((s) => s.linkExistingPerson);
   const startOnboardingSelf = useTreeStore((s) => s.startOnboardingSelf);
   const onboardingStep = useTreeStore((s) => s.onboardingStep);
   const selectedPersonId = useTreeStore((s) => s.selectedPersonId);
@@ -34,31 +40,77 @@ export function AddPersonModal() {
   const finishOnboarding = useTreeStore((s) => s.finishOnboarding);
 
   const isEmpty = people.length === 0;
-  const anchor = people.find((p) => p.id === (context?.anchorId || selectedPersonId));
-  const [step, setStep] = useState<"connect" | "form">(context?.connection || isEmpty ? "form" : "connect");
+  const canLink = people.length > 1;
+  const linkOnly = context?.mode === "link";
+  const [step, setStep] = useState<AddStep>(context?.connection || isEmpty ? "form" : "connect");
   const [connection, setConnection] = useState<ConnectionChoice | undefined>(context?.connection);
   const [relatedTo, setRelatedTo] = useState(context?.anchorId || selectedPersonId || "");
+  const [linkPersonId, setLinkPersonId] = useState("");
+  const [linkQuery, setLinkQuery] = useState("");
   const [draft, setDraft] = useState<PersonDraft>(emptyPersonDraft());
   const [more, setMore] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     const initialConnection = context?.connection;
+    const nextCanLink = people.length > 1;
+    const nextLinkOnly = context?.mode === "link";
     setConnection(initialConnection);
     setRelatedTo(context?.anchorId || selectedPersonId || people[0]?.id || "");
+    setLinkPersonId("");
+    setLinkQuery("");
     setDraft(emptyPersonDraft());
     setMore(false);
-    setStep(isEmpty || initialConnection ? "form" : "connect");
+    if (isEmpty) {
+      setStep("form");
+    } else if (!initialConnection) {
+      setStep("connect");
+    } else if (nextLinkOnly && nextCanLink && initialConnection !== "other") {
+      setStep("link");
+    } else if (nextCanLink && initialConnection !== "other") {
+      setStep("who");
+    } else {
+      setStep("form");
+    }
   }, [open, context, selectedPersonId, people, isEmpty]);
 
+  function chooseConnection(next: ConnectionChoice) {
+    const resolved = next === "spouse" ? "spouse" : next;
+    setConnection(resolved);
+    if (resolved === "other") {
+      setStep("form");
+      return;
+    }
+    if (linkOnly && canLink) {
+      setStep("link");
+      return;
+    }
+    if (canLink) {
+      setStep("who");
+      return;
+    }
+    setStep("form");
+  }
+
   const relatedPerson = people.find((p) => p.id === relatedTo);
+  const linking = step === "link" || linkOnly;
   const title = isEmpty
     ? "Add yourself"
-    : relatedPerson && (connection || step === "connect")
-      ? `Add relative to ${cardName(relatedPerson)}`
-      : "Add someone to your family tree";
+    : relatedPerson && linking
+      ? `Link relative to ${cardName(relatedPerson)}`
+      : relatedPerson && (connection || step === "connect" || step === "who")
+        ? `Add relative to ${cardName(relatedPerson)}`
+        : "Add someone to your family tree";
 
   const canSubmit = draft.firstName.trim().length > 0;
+  const linkCandidates = useMemo(() => {
+    const query = linkQuery.trim().toLowerCase();
+    return people.filter((person) => {
+      if (person.id === relatedTo) return false;
+      if (!query) return true;
+      return [cardName(person), person.preferredName].join(" ").toLowerCase().includes(query);
+    });
+  }, [people, relatedTo, linkQuery]);
 
   const connectionLabel = useMemo(
     () => CONNECTIONS.find((c) => c.id === (connection === "partner" ? "spouse" : connection))?.label,
@@ -98,16 +150,22 @@ export function AddPersonModal() {
       title={
         isEmpty
           ? "Add yourself"
-          : relatedPerson && context?.anchorId
-            ? `Add relative to ${cardName(relatedPerson)}`
-            : "Add someone to your family tree"
+          : relatedPerson && linking
+            ? `Link relative to ${cardName(relatedPerson)}`
+            : relatedPerson && context?.anchorId
+              ? `Add relative to ${cardName(relatedPerson)}`
+              : "Add someone to your family tree"
       }
       subtitle={
         isEmpty
           ? "Start with you. You can add parents, a partner, and children next."
-          : relatedPerson && connection
-            ? `${connectionLabel} of ${cardName(relatedPerson)}`
-            : "How are they connected?"
+          : step === "who"
+            ? "Are they new, or already on the tree?"
+            : step === "link" && relatedPerson && connection
+              ? `Choose who is the ${connectionLabel?.toLowerCase()} of ${cardName(relatedPerson)}.`
+              : relatedPerson && connection
+                ? `${connectionLabel} of ${cardName(relatedPerson)}`
+                : "How are they connected?"
       }
       wide={step === "form"}
     >
@@ -176,14 +234,107 @@ export function AddPersonModal() {
                 key={item.id}
                 type="button"
                 className="min-h-14 rounded-2xl border border-line bg-white px-4 py-3 text-left text-sm hover:border-forest hover:bg-sage-soft"
-                onClick={() => {
-                  setConnection(item.id === "spouse" ? "spouse" : item.id);
-                  setStep("form");
-                }}
+                onClick={() => chooseConnection(item.id)}
               >
                 {item.label}
               </button>
             ))}
+          </div>
+        </div>
+      ) : null}
+
+      {!isEmpty && step === "who" ? (
+        <div className="space-y-3">
+          <button
+            type="button"
+            className="flex min-h-16 w-full flex-col items-start rounded-2xl border border-line bg-white px-4 py-4 text-left hover:border-forest hover:bg-sage-soft"
+            onClick={() => setStep("form")}
+          >
+            <span className="text-sm font-medium text-charcoal">Add a new person</span>
+            <span className="mt-1 text-sm text-soft">Create someone who is not on the tree yet.</span>
+          </button>
+          <button
+            type="button"
+            className="flex min-h-16 w-full flex-col items-start rounded-2xl border border-line bg-white px-4 py-4 text-left hover:border-forest hover:bg-sage-soft"
+            onClick={() => setStep("link")}
+          >
+            <span className="text-sm font-medium text-charcoal">Link someone already here</span>
+            <span className="mt-1 text-sm text-soft">Connect a person who is already in the archive.</span>
+          </button>
+          <Button type="button" variant="secondary" className="w-full" onClick={() => setStep("connect")}>
+            Back
+          </Button>
+        </div>
+      ) : null}
+
+      {!isEmpty && step === "link" ? (
+        <div className="space-y-5">
+          {people.length > 2 ? (
+            <Field label="Search">
+              <TextInput
+                value={linkQuery}
+                onChange={(e) => setLinkQuery(e.target.value)}
+                placeholder="Name"
+                autoFocus
+              />
+            </Field>
+          ) : null}
+          <div className="space-y-2">
+            {linkCandidates.length === 0 ? (
+              <p className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-soft">
+                No one else matches that name.
+              </p>
+            ) : (
+              linkCandidates.map((person) => {
+                const already = connection
+                  ? connectionAlreadyExists(relationships, person.id, relatedTo, connection)
+                  : false;
+                const selected = linkPersonId === person.id;
+                return (
+                  <button
+                    key={person.id}
+                    type="button"
+                    disabled={already}
+                    onClick={() => setLinkPersonId(person.id)}
+                    className={cn(
+                      "flex min-h-16 w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left",
+                      already
+                        ? "cursor-not-allowed border-line bg-white/60 opacity-60"
+                        : selected
+                          ? "border-forest bg-sage-soft"
+                          : "border-line bg-white hover:border-forest hover:bg-sage-soft",
+                    )}
+                  >
+                    <PersonAvatar person={person} size="sm" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-medium text-charcoal">{cardName(person)}</span>
+                      <span className="block text-xs text-soft">
+                        {already ? "Already connected this way" : lifespan(person) || "Family member"}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setStep(linkOnly ? "connect" : "who")}
+            >
+              Back
+            </Button>
+            <Button
+              className="flex-1"
+              disabled={!linkPersonId || !relatedTo || !connection || connection === "other"}
+              onClick={() => {
+                if (!connection || connection === "other") return;
+                linkExistingPerson(linkPersonId, { anchorId: relatedTo, connection });
+              }}
+            >
+              Link to family tree
+            </Button>
           </div>
         </div>
       ) : null}
@@ -294,8 +445,12 @@ export function AddPersonModal() {
             </div>
           ) : null}
           <div className="flex gap-3">
-            {!context?.connection ? (
-              <Button type="button" variant="secondary" onClick={() => setStep("connect")}>
+            {!context?.connection || canLink ? (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setStep(canLink && connection && connection !== "other" ? "who" : "connect")}
+              >
                 Back
               </Button>
             ) : null}
