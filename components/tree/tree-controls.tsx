@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize2, Minus, Plus } from "lucide-react";
+import { FileDown, Maximize2, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export function TreeControls({
@@ -8,6 +8,8 @@ export function TreeControls({
   onZoomIn,
   onZoomOut,
   onFit,
+  onDownloadPdf,
+  downloading,
   generations,
   maxGenerations,
   onGenerations,
@@ -16,6 +18,8 @@ export function TreeControls({
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFit: () => void;
+  onDownloadPdf: () => void;
+  downloading?: boolean;
   generations: number;
   maxGenerations: number;
   onGenerations: (value: number) => void;
@@ -48,6 +52,16 @@ export function TreeControls({
         onClick={onFit}
       >
         <Maximize2 className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        className="flex h-10 items-center gap-1.5 rounded-full border border-line bg-white px-3 text-soft hover:text-charcoal"
+        aria-label="Download tree as PDF"
+        onClick={onDownloadPdf}
+        disabled={downloading}
+      >
+        <FileDown className="h-4 w-4" />
+        <span className="hidden text-xs sm:inline">{downloading ? "Saving…" : "PDF"}</span>
       </button>
       <label className="relative">
         <span className="sr-only">Visible generations</span>

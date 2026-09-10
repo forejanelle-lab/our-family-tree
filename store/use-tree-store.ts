@@ -18,6 +18,8 @@ import {
   getParents,
   getPartners,
   relationshipExists,
+  unlinkPeople,
+  type UnlinkKind,
 } from "@/lib/relationships";
 import type {
   ActivityItem,
@@ -86,6 +88,7 @@ interface TreeState {
   markSaving: () => void;
   addPersonWithConnection: (draft: PersonDraft, context?: AddPersonContext) => string;
   linkExistingPerson: (existingPersonId: string, context: { anchorId: string; connection: ConnectionChoice }) => boolean;
+  unlinkRelationship: (personId: string, relatedPersonId: string, kind: UnlinkKind) => void;
   updatePerson: (id: string, patch: Partial<Person>) => void;
   deletePerson: (id: string) => void;
   addPhoto: (photo: Omit<Photo, "id" | "familyTreeId" | "uploadedAt">) => void;
@@ -361,6 +364,16 @@ export const useTreeStore = create<TreeState>()(
         });
         touchSave(set);
         return true;
+      },
+
+      unlinkRelationship: (personId, relatedPersonId, kind) => {
+        if (personId === relatedPersonId) return;
+        const nextRels = unlinkPeople(get().relationships, personId, relatedPersonId, kind);
+        set({
+          people: computeGenerations(get().people, nextRels),
+          relationships: nextRels,
+        });
+        touchSave(set);
       },
 
       updatePerson: (id, patch) => {

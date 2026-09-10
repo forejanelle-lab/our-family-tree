@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -15,11 +15,12 @@ import {
 } from "@xyflow/react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PersonNode } from "@/components/tree/person-node";
+import { PersonNode, type PersonNodeData } from "@/components/tree/person-node";
 import { UnionNode } from "@/components/tree/union-node";
 import { TreeControls } from "@/components/tree/tree-controls";
 import { TreeEmptyState } from "@/components/tree/tree-empty-state";
-import { generationCount } from "@/lib/relationships";
+import { downloadTreePdf } from "@/lib/export-tree-pdf";
+import { generationCount, nearbyPersonIds } from "@/lib/relationships";
 import { layoutFamilyTree } from "@/lib/tree-layout";
 import { ViewOnlyBanner } from "@/components/auth/view-only-banner";
 import { useActiveTree, useTreeStore } from "@/store/use-tree-store";
@@ -43,6 +44,8 @@ function TreeCanvas() {
   const guestView = useAuthStore((s) => s.guestView);
   const { fitView, zoomIn, zoomOut, setCenter } = useReactFlow();
   const { zoom } = useViewport();
+  const [downloading, setDownloading] = useState(false);
+  const peopleCount = useRef(people.length);
 
   const gens = Math.max(1, generationCount(people));
   const layout = useMemo(
@@ -123,11 +126,38 @@ function TreeCanvas() {
   }, [built, setNodes, setEdges]);
 
   const skipCenter = useRef(true);
+  const pendingFamilyFocus = useRef<string | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => fitView({ padding: 0.18, duration: 500 }), 80);
+    const t = setTimeout(() => fitView({ padding: 0.22, maxZoom: 1.05, duration: 400 }), 80);
     return () => clearTimeout(t);
-  }, [people.length, generationLimit, fitView]);
+  }, [generationLimit, fitView]);
+
+  useEffect(() => {
+    if (people.length > peopleCount.current && peopleCount.current > 0 && selectedPersonId) {
+      pendingFamilyFocus.current = selectedPersonId;
+      skipCenter.current = true;
+    }
+    peopleCount.current = people.length;
+  }, [people.length, selectedPersonId]);
+
+  useEffect(() => {
+    const focusId = pendingFamilyFocus.current;
+    if (!focusId) return;
+    const ids = nearbyPersonIds(focusId, relationships);
+    const family = nodes.filter((node) => {
+      if (node.type !== "person") return false;
+      const person = (node.data as PersonNodeData).person;
+      return person && ids.has(person.id);
+    });
+    if (!family.some((node) => node.id === `person-${focusId}`)) return;
+    pendingFamilyFocus.current = null;
+    const t = setTimeout(
+      () => fitView({ nodes: family, padding: 0.32, maxZoom: 1.15, duration: 500 }),
+      80,
+    );
+    return () => clearTimeout(t);
+  }, [nodes, relationships, fitView]);
 
   useEffect(() => {
     if (!selectedPersonId) return;
@@ -137,7 +167,7 @@ function TreeCanvas() {
     }
     const node = nodes.find((n) => n.id === `person-${selectedPersonId}`);
     if (!node) return;
-    setCenter(node.position.x + 94, node.position.y + 80, { zoom: Math.max(zoom, 0.85), duration: 450 });
+    setCenter(node.position.x + 94, node.position.y + 80, { zoom: Math.max(zoom, 0.95), duration: 450 });
   }, [selectedPersonId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (people.length === 0) {
@@ -167,7 +197,16 @@ function TreeCanvas() {
               zoom={zoom}
               onZoomIn={() => zoomIn({ duration: 200 })}
               onZoomOut={() => zoomOut({ duration: 200 })}
-              onFit={() => fitView({ padding: 0.2, duration: 400 })}
+              onFit={() => fitView({ padding: 0.2, maxZoom: 1.1, duration: 400 })}
+              onDownloadPdf={() => {
+                setDownloading(true);
+                try {
+                  downloadTreePdf(tree?.name || "Family Tree", people, relationships);
+                } finally {
+                  setDownloading(false);
+                }
+              }}
+              downloading={downloading}
               generations={generationLimit}
               maxGenerations={Math.max(gens, generationLimit)}
               onGenerations={setGenerationLimit}

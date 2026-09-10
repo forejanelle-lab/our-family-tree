@@ -163,6 +163,79 @@ export function relationshipExists(
   );
 }
 
+export type UnlinkKind = "parent" | "child" | "partner" | "sibling";
+
+export function hasDirectRelationship(
+  relationships: Relationship[],
+  personId: string,
+  relatedPersonId: string,
+  kind: UnlinkKind,
+) {
+  return relationships.some((r) => {
+    if (kind === "partner") {
+      return (
+        (r.relationshipType === "spouse" || r.relationshipType === "partner") &&
+        ((r.personId === personId && r.relatedPersonId === relatedPersonId) ||
+          (r.personId === relatedPersonId && r.relatedPersonId === personId))
+      );
+    }
+    if (kind === "sibling") {
+      return (
+        r.relationshipType === "sibling" &&
+        ((r.personId === personId && r.relatedPersonId === relatedPersonId) ||
+          (r.personId === relatedPersonId && r.relatedPersonId === personId))
+      );
+    }
+    if (kind === "parent") {
+      return PARENT_TYPES.includes(r.relationshipType) && r.personId === relatedPersonId && r.relatedPersonId === personId;
+    }
+    return PARENT_TYPES.includes(r.relationshipType) && r.personId === personId && r.relatedPersonId === relatedPersonId;
+  });
+}
+
+export function unlinkPeople(
+  relationships: Relationship[],
+  personId: string,
+  relatedPersonId: string,
+  kind: UnlinkKind,
+): Relationship[] {
+  return relationships.filter((r) => {
+    if (kind === "partner") {
+      const pair =
+        (r.personId === personId && r.relatedPersonId === relatedPersonId) ||
+        (r.personId === relatedPersonId && r.relatedPersonId === personId);
+      return !(pair && (r.relationshipType === "spouse" || r.relationshipType === "partner"));
+    }
+    if (kind === "sibling") {
+      const pair =
+        (r.personId === personId && r.relatedPersonId === relatedPersonId) ||
+        (r.personId === relatedPersonId && r.relatedPersonId === personId);
+      return !(pair && r.relationshipType === "sibling");
+    }
+    if (kind === "parent") {
+      return !(
+        PARENT_TYPES.includes(r.relationshipType) &&
+        r.personId === relatedPersonId &&
+        r.relatedPersonId === personId
+      );
+    }
+    return !(
+      PARENT_TYPES.includes(r.relationshipType) &&
+      r.personId === personId &&
+      r.relatedPersonId === relatedPersonId
+    );
+  });
+}
+
+export function nearbyPersonIds(personId: string, relationships: Relationship[]) {
+  const ids = new Set<string>([personId]);
+  for (const parent of getParents(personId, relationships)) ids.add(parent.id);
+  for (const partner of getPartners(personId, relationships)) ids.add(partner.id);
+  for (const child of getChildren(personId, relationships)) ids.add(child.id);
+  for (const sibling of getSiblings(personId, relationships)) ids.add(sibling);
+  return ids;
+}
+
 export function connectionAlreadyExists(
   relationships: Relationship[],
   existingPersonId: string,

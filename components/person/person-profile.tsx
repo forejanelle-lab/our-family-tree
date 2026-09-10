@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MoreHorizontal, Pencil, Plus, X } from "lucide-react";
+import { MoreHorizontal, Pencil, Plus, Unlink, X } from "lucide-react";
 import { PersonAvatar } from "@/components/person/person-avatar";
 import { PhotoUploader } from "@/components/person/photo-uploader";
 import { Button, Field, TextArea, TextInput } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import {
   getParents,
   getPartners,
   getSiblings,
+  hasDirectRelationship,
+  type UnlinkKind,
 } from "@/lib/relationships";
 import type { Person, PersonDraft } from "@/lib/types";
 import { useTreeStore, type ProfileTab } from "@/store/use-tree-store";
@@ -21,13 +23,22 @@ function RelList({
   label,
   ids,
   people,
+  kind,
+  personId,
+  canEdit,
   onSelect,
+  onUnlink,
 }: {
   label: string;
   ids: string[];
   people: Person[];
+  kind: UnlinkKind;
+  personId: string;
+  canEdit: boolean;
   onSelect: (id: string) => void;
+  onUnlink: (id: string, kind: UnlinkKind) => void;
 }) {
+  const relationships = useTreeStore((s) => s.relationships);
   const items = ids
     .map((id) => people.find((p) => p.id === id))
     .filter(Boolean) as Person[];
@@ -36,17 +47,35 @@ function RelList({
     <div>
       <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-soft">{label}</p>
       <div className="mt-2 space-y-1.5">
-        {items.map((person) => (
-          <button
-            key={person.id}
-            type="button"
-            onClick={() => onSelect(person.id)}
-            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-1 py-2 text-left hover:bg-cream"
-          >
-            <PersonAvatar person={person} size="sm" />
-            <span className="text-sm text-charcoal">{displayName(person)}</span>
-          </button>
-        ))}
+        {items.map((person) => {
+          const canUnlink = canEdit && hasDirectRelationship(relationships, personId, person.id, kind);
+          return (
+            <div key={person.id} className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onSelect(person.id)}
+                className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl px-1 py-2 text-left hover:bg-cream"
+              >
+                <PersonAvatar person={person} size="sm" />
+                <span className="text-sm text-charcoal">{displayName(person)}</span>
+              </button>
+              {canUnlink ? (
+                <button
+                  type="button"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-soft hover:bg-red-50 hover:text-red-700"
+                  aria-label={`Unlink ${displayName(person)}`}
+                  onClick={() => {
+                    if (confirm(`Unlink ${displayName(person)} as ${kind}? They will stay on the tree.`)) {
+                      onUnlink(person.id, kind);
+                    }
+                  }}
+                >
+                  <Unlink className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -66,6 +95,7 @@ export function PersonProfile({ mobile = false }: { mobile?: boolean }) {
   const selectPerson = useTreeStore((s) => s.selectPerson);
   const updatePerson = useTreeStore((s) => s.updatePerson);
   const deletePerson = useTreeStore((s) => s.deletePerson);
+  const unlinkRelationship = useTreeStore((s) => s.unlinkRelationship);
   const editing = useTreeStore((s) => s.profileEditing);
   const setProfileEditing = useTreeStore((s) => s.setProfileEditing);
   const canEdit = useCanEdit();
@@ -235,15 +265,54 @@ export function PersonProfile({ mobile = false }: { mobile?: boolean }) {
             {person.biography ? (
               <p className="text-sm leading-relaxed text-charcoal/90">{person.biography}</p>
             ) : null}
-            <RelList label="Parents" ids={related.parents} people={people} onSelect={selectPerson} />
-            <RelList label="Siblings" ids={related.siblings} people={people} onSelect={selectPerson} />
+            <div>
+              <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.14em] text-soft">Relationships</p>
+              {canEdit ? (
+                <p className="mb-3 text-xs text-soft">
+                  Unlink a mistaken connection without removing the person. Then link them the right way.
+                </p>
+              ) : null}
+            </div>
+            <RelList
+              label="Parents"
+              ids={related.parents}
+              people={people}
+              kind="parent"
+              personId={person.id}
+              canEdit={canEdit}
+              onSelect={selectPerson}
+              onUnlink={(id, kind) => unlinkRelationship(person.id, id, kind)}
+            />
+            <RelList
+              label="Siblings"
+              ids={related.siblings}
+              people={people}
+              kind="sibling"
+              personId={person.id}
+              canEdit={canEdit}
+              onSelect={selectPerson}
+              onUnlink={(id, kind) => unlinkRelationship(person.id, id, kind)}
+            />
             <RelList
               label={related.partners.length > 1 ? "Partners" : "Partner"}
               ids={related.partners}
               people={people}
+              kind="partner"
+              personId={person.id}
+              canEdit={canEdit}
               onSelect={selectPerson}
+              onUnlink={(id, kind) => unlinkRelationship(person.id, id, kind)}
             />
-            <RelList label="Children" ids={related.children} people={people} onSelect={selectPerson} />
+            <RelList
+              label="Children"
+              ids={related.children}
+              people={people}
+              kind="child"
+              personId={person.id}
+              canEdit={canEdit}
+              onSelect={selectPerson}
+              onUnlink={(id, kind) => unlinkRelationship(person.id, id, kind)}
+            />
           </div>
         ) : null}
 
