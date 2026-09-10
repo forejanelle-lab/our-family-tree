@@ -137,4 +137,15 @@ create index if not exists relationships_person_idx on public.relationships (per
 create index if not exists relationships_related_idx on public.relationships (related_person_id);
 create index if not exists photos_tree_idx on public.photos (family_tree_id);
 create index if not exists stories_tree_idx on public.stories (family_tree_id);
-create index if not exists events_person_idx on public.events (person_id);
+create table if not exists public.tree_snapshots (
+  id text primary key,
+  owner_email text not null,
+  invite_code text not null,
+  view_passcode text not null,
+  edit_code text not null,
+  snapshot jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists tree_snapshots_owner_idx on public.tree_snapshots (owner_email);
+create index if not exists tree_snapshots_invite_idx on public.tree_snapshots (invite_code);

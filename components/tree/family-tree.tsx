@@ -201,7 +201,13 @@ function TreeCanvas() {
               onDownloadPdf={() => {
                 setDownloading(true);
                 try {
-                  downloadTreePdf(tree?.name || "Family Tree", people, relationships);
+                  const state = useTreeStore.getState();
+                  const active = state.trees.find((item) => item.id === state.activeTreeId) ?? state.trees[0];
+                  if (!state.people.length) {
+                    window.alert("Add someone to the tree before downloading a PDF.");
+                    return;
+                  }
+                  downloadTreePdf(active?.name || tree?.name || "Family Tree", state.people, state.relationships);
                 } catch (error) {
                   console.error(error);
                   window.alert("The PDF could not be created. Try again in a moment.");

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Loader2, Search, Share2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/search/search-bar";
+import { applySavedShareCodes, currentTreeSlice, saveMyTreeOnServer } from "@/lib/tree-sync";
 import { useTreeStore } from "@/store/use-tree-store";
 import { useAuthStore, useCanEdit } from "@/store/use-auth-store";
 
@@ -14,8 +15,30 @@ export function TopNav() {
   const setSearchOpen = useTreeStore((s) => s.setSearchOpen);
   const setSearchQuery = useTreeStore((s) => s.setSearchQuery);
   const canEdit = useCanEdit();
+  const user = useAuthStore((s) => s.user);
   const openSignInPrompt = useAuthStore((s) => s.openSignInPrompt);
   const [mobileSearch, setMobileSearch] = useState(false);
+
+  async function saveToArchive() {
+    if (!user) {
+      openSignInPrompt();
+      return;
+    }
+    const slice = currentTreeSlice();
+    if (!slice || slice.people.length === 0) {
+      markSaving();
+      return;
+    }
+    useTreeStore.setState({ saveState: "saving" });
+    const saved = await saveMyTreeOnServer(slice, user.email);
+    if (saved.ok) {
+      applySavedShareCodes(saved.snapshot);
+      useTreeStore.setState({ saveState: "saved" });
+      return;
+    }
+    useTreeStore.setState({ saveState: "unsaved" });
+    window.alert(saved.error || "The archive could not be saved. Sign in and try again.");
+  }
 
   function closeMobileSearch() {
     setMobileSearch(false);
@@ -68,7 +91,7 @@ export function TopNav() {
                   <Share2 className="h-4 w-4" />
                   <span className="hidden sm:inline">Share</span>
                 </Button>
-                <Button size="icon" className="h-11 w-11 sm:h-10 sm:w-auto sm:px-4" onClick={markSaving} aria-live="polite">
+                <Button size="icon" className="h-11 w-11 sm:h-10 sm:w-auto sm:px-4" onClick={() => void saveToArchive()} aria-live="polite">
                   {saveState === "saving" ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (

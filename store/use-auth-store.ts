@@ -51,6 +51,15 @@ async function syncAccountToServer(
 import { findTreeByEditCode, findTreeByInviteCode, matchesViewPasscode } from "@/lib/invites";
 import { newId } from "@/lib/format";
 import { APONTE_TREE, WILLIAMS_TREE } from "@/lib/mock-data";
+import {
+  currentTreeSlice,
+  joinTreeOnServer,
+  loadMyTreeOnServer,
+  lookupTreeOnServer,
+  saveMyTreeOnServer,
+  viewTreeOnServer,
+  applySavedShareCodes,
+} from "@/lib/tree-sync";
 import type { AccessRole } from "@/lib/types";
 import { useTreeStore, waitForTreeHydration } from "@/store/use-tree-store";
 
@@ -98,6 +107,27 @@ async function withDemoAccount(accounts: StoredAccount[]) {
 
 function toUser(account: StoredAccount): AuthUser {
   return { id: account.id, name: account.name, email: account.email, role: account.role || "owner" };
+}
+
+async function syncTreeWithServer(email: string) {
+  try {
+    const remote = await loadMyTreeOnServer();
+    const local = useTreeStore.getState();
+    if (remote.ok && remote.snapshot?.people.length) {
+      if (local.people.length === 0 || remote.snapshot.people.length >= local.people.length) {
+        local.applySnapshot(remote.snapshot, { keepLocalPhotos: true });
+        return;
+      }
+    }
+    const slice = currentTreeSlice();
+    if (!slice || slice.people.length === 0) return;
+    const saved = await saveMyTreeOnServer(slice, email);
+    if (saved.ok) {
+      applySavedShareCodes(saved.snapshot);
+    }
+  } catch {
+    // Keep the local archive if the server is unreachable.
+  }
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -160,6 +190,7 @@ export const useAuthStore = create<AuthState>()(
         await waitForTreeHydration();
         useTreeStore.getState().setUserName(firstNameFrom(user.name));
         set({ accounts, user, guestView: false, role: user.role, signInPromptOpen: false });
+        await syncTreeWithServer(user.email);
         return { ok: true };
       },
 
@@ -179,6 +210,7 @@ export const useAuthStore = create<AuthState>()(
           const user = toUser(existing);
           useTreeStore.getState().setUserName(firstNameFrom(user.name));
           set({ accounts, user, guestView: false, role: user.role, signInPromptOpen: false });
+          await syncTreeWithServer(user.email);
           return { ok: true };
         }
 
@@ -187,9 +219,13 @@ export const useAuthStore = create<AuthState>()(
         const code = joinCode?.trim();
         if (code) {
           const extra = useTreeStore.getState().trees;
-          const tree = findTreeByEditCode(code, extra);
-          if (!tree) return { ok: false, error: "That family join code isn’t valid." };
+          const localTree = findTreeByEditCode(code, extra);
+          const joined = localTree ? null : await joinTreeOnServer(code);
+          if (!localTree && (!joined || !joined.ok)) {
+            return { ok: false, error: "That family join code isn’t valid." };
+          }
           role = "editor";
+          if (joined?.ok) useTreeStore.getState().applySnapshot(joined.snapshot, { keepLocalPhotos: true });
         }
 
         const account: StoredAccount = {
@@ -217,6 +253,7 @@ export const useAuthStore = create<AuthState>()(
           role,
           signInPromptOpen: false,
         });
+        if (role !== "editor") await syncTreeWithServer(user.email);
         return { ok: true };
       },
 
@@ -228,15 +265,31 @@ export const useAuthStore = create<AuthState>()(
       lookupInvite: async (inviteCode) => {
         await waitForAuthHydration();
         await waitForTreeHydration();
+        try {
+          const remote = await lookupTreeOnServer(inviteCode);
+          if (remote.ok) return remote;
+        } catch {
+          // Use a tree already on this device if the archive is offline.
+        }
         const extra = useTreeStore.getState().trees;
-        const tree = findTreeByInviteCode(inviteCode, extra);
-        if (!tree) return { ok: false, error: "We couldn’t find a tree with that invite code." };
-        return { ok: true, name: tree.name };
+        const local = findTreeByInviteCode(inviteCode, extra);
+        if (local) return { ok: true, name: local.name };
+        return { ok: false, error: "We couldn’t find a tree with that invite code." };
       },
 
       enterAsViewer: async (inviteCode, passcode) => {
         await waitForAuthHydration();
         await waitForTreeHydration();
+        try {
+          const remote = await viewTreeOnServer(inviteCode, passcode);
+          if (remote.ok) {
+            useTreeStore.getState().applySnapshot(remote.snapshot);
+            set({ guestView: true, user: null, role: "viewer", signInPromptOpen: false });
+            return { ok: true };
+          }
+        } catch {
+          // Fall back to a tree already on this device.
+        }
         const extra = useTreeStore.getState().trees;
         const tree = findTreeByInviteCode(inviteCode, extra);
         if (!tree) return { ok: false, error: "We couldn’t find a tree with that invite code." };
@@ -255,7 +308,10 @@ export const useAuthStore = create<AuthState>()(
         return { ok: true };
       },
 
-      signOut: () => set({ user: null, guestView: false, role: "owner", signInPromptOpen: false }),
+      signOut: () => {
+        void fetch("/api/auth/signout", { method: "POST" });
+        set({ user: null, guestView: false, role: "owner", signInPromptOpen: false });
+      },
     }),
     {
       name: "our-family-tree-auth-v1",

@@ -17,8 +17,17 @@ function slug(value: string) {
   );
 }
 
+function pdfText(value: string) {
+  return (value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\x09\x0a\x0d\x20-\x7e]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function personLabel(person: Person) {
-  return cardName(person) || displayName(person) || "Family member";
+  return pdfText(cardName(person) || displayName(person) || "Family member") || "Family member";
 }
 
 function pageWindows(items: { start: number; size: number }[], pageSize: number) {
@@ -39,13 +48,25 @@ function pageWindows(items: { start: number; size: number }[], pageSize: number)
   return windows;
 }
 
-function overlaps(
-  start: number,
-  size: number,
-  windowStart: number,
-  windowSize: number,
-) {
+function overlaps(start: number, size: number, windowStart: number, windowSize: number) {
   return start < windowStart + windowSize && start + size > windowStart;
+}
+
+function triggerDownload(doc: jsPDF, filename: string) {
+  try {
+    const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch {
+    doc.save(filename);
+  }
 }
 
 export function buildTreePdf(
@@ -85,9 +106,10 @@ export function buildTreePdf(
       : xWindows.flatMap((xWindow, col) => yWindows.map((yWindow, row) => ({ xWindow, yWindow, col, row })));
 
   const directory = [...people].sort((a, b) => personLabel(a).localeCompare(personLabel(b)));
-  const rowsPerPage = 16;
+  const rowsPerPage = 14;
   const directoryPages = Math.max(1, Math.ceil(directory.length / rowsPerPage));
   const total = Math.max(1, treePages.length + directoryPages);
+  const title = pdfText(treeName) || "Family Tree";
 
   const doc = new jsPDF({
     orientation: "landscape",
@@ -100,12 +122,12 @@ export function buildTreePdf(
     doc.rect(0, 0, pageW, pageH, "F");
   }
 
-  function drawHeader(title: string, subtitle: string) {
+  function drawHeader(heading: string, subtitle: string) {
     paintBackground();
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.setTextColor(33, 78, 52);
-    doc.text(title, margin, margin + 16);
+    doc.text(heading, margin, margin + 16);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(90, 108, 94);
@@ -115,12 +137,42 @@ export function buildTreePdf(
     doc.line(margin, margin + headerH - 8, pageW - margin, margin + headerH - 8);
   }
 
-  function drawTreePage(
-    originX: number,
-    originY: number,
-    windowW: number,
-    windowH: number,
-  ) {
+  function drawDirectoryPage(pageIndex: number) {
+    const start = pageIndex * rowsPerPage;
+    const rows = directory.slice(start, start + rowsPerPage);
+    let y = margin + headerH + 18;
+    if (pageIndex === 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(33, 78, 52);
+      doc.text(`${people.length} ${people.length === 1 ? "person" : "people"} in this tree`, margin, y);
+      y += 28;
+    }
+    rows.forEach((person, index) => {
+      if (index % 2 === 0) {
+        doc.setFillColor(255, 255, 255);
+        doc.rect(margin, y - 16, innerW, 32, "F");
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(36, 40, 37);
+      doc.text(personLabel(person), margin + 14, y);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(90, 108, 94);
+      const detail = pdfText(lifespan(person) || person.birthPlace || person.occupation || "Family member");
+      doc.text(detail, margin + 320, y);
+      y += 34;
+    });
+    if (rows.length === 0) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      doc.setTextColor(90, 108, 94);
+      doc.text("No people have been added to this tree yet.", margin, margin + headerH + 24);
+    }
+  }
+
+  function drawTreePage(originX: number, originY: number, windowW: number, windowH: number) {
     const ox = margin - originX;
     const oy = margin + headerH - originY;
 
@@ -163,7 +215,7 @@ export function buildTreePdf(
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(160, 176, 162);
       doc.setLineWidth(1);
-      doc.roundedRect(x, y, PERSON_NODE_WIDTH, PERSON_NODE_HEIGHT, 12, 12, "FD");
+      doc.rect(x, y, PERSON_NODE_WIDTH, PERSON_NODE_HEIGHT, "FD");
 
       const cx = x + PERSON_NODE_WIDTH / 2;
       doc.setFillColor(215, 227, 216);
@@ -171,68 +223,42 @@ export function buildTreePdf(
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       doc.setTextColor(33, 78, 52);
-      doc.text(initials(person) || "·", cx, y + 53, { align: "center" });
+      doc.text(pdfText(initials(person)) || ".", cx, y + 53, { align: "center" });
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
       doc.setTextColor(36, 40, 37);
       const nameLines = doc.splitTextToSize(personLabel(person), PERSON_NODE_WIDTH - 20);
       doc.text(nameLines, cx, y + PERSON_NODE_HEIGHT - 58, { align: "center" });
-      const years = lifespan(person);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
       doc.setTextColor(90, 108, 94);
-      doc.text(years || "Dates unknown", cx, y + PERSON_NODE_HEIGHT - 24, { align: "center" });
-    }
-  }
-
-  function drawDirectoryPage(pageIndex: number) {
-    const start = pageIndex * rowsPerPage;
-    const rows = directory.slice(start, start + rowsPerPage);
-    let y = margin + headerH + 8;
-    rows.forEach((person, index) => {
-      if (index % 2 === 0) {
-        doc.setFillColor(255, 255, 255);
-        doc.roundedRect(margin, y - 12, innerW, 26, 6, 6, "F");
-      }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(36, 40, 37);
-      doc.text(personLabel(person), margin + 12, y);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(90, 108, 94);
-      doc.text(lifespan(person) || person.birthPlace || "Family member", margin + 280, y);
-      y += 28;
-    });
-    if (rows.length === 0) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(12);
-      doc.setTextColor(90, 108, 94);
-      doc.text("No people have been added to this tree yet.", margin, margin + headerH + 24);
+      doc.text(pdfText(lifespan(person) || "Dates unknown"), cx, y + PERSON_NODE_HEIGHT - 24, {
+        align: "center",
+      });
     }
   }
 
   let pageIndex = 0;
-  treePages.forEach((page) => {
-    if (pageIndex > 0) doc.addPage("a4", "landscape");
-    pageIndex += 1;
-    drawHeader(
-      treeName || "Family Tree",
-      `${people.length} ${people.length === 1 ? "person" : "people"}  ·  Page ${pageIndex} of ${total}  ·  Tree`,
-    );
-    drawTreePage(page.xWindow.start, page.yWindow.start, page.xWindow.size, page.yWindow.size);
-  });
-
   for (let i = 0; i < directoryPages; i += 1) {
     if (pageIndex > 0) doc.addPage("a4", "landscape");
     pageIndex += 1;
     drawHeader(
-      treeName || "Family Tree",
+      title,
       `${people.length} ${people.length === 1 ? "person" : "people"}  ·  Page ${pageIndex} of ${total}  ·  People`,
     );
     drawDirectoryPage(i);
   }
+
+  treePages.forEach((page) => {
+    if (pageIndex > 0) doc.addPage("a4", "landscape");
+    pageIndex += 1;
+    drawHeader(
+      title,
+      `${people.length} ${people.length === 1 ? "person" : "people"}  ·  Page ${pageIndex} of ${total}  ·  Tree`,
+    );
+    drawTreePage(page.xWindow.start, page.yWindow.start, page.xWindow.size, page.yWindow.size);
+  });
 
   return doc;
 }
@@ -243,5 +269,5 @@ export function downloadTreePdf(
   relationships: Relationship[],
 ) {
   const doc = buildTreePdf(treeName, people, relationships);
-  doc.save(`${slug(treeName)}.pdf`);
+  triggerDownload(doc, `${slug(treeName)}.pdf`);
 }

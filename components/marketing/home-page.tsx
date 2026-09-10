@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button, ButtonLink, TextInput } from "@/components/ui/button";
 import { LeafMark } from "@/components/ui/leaf-mark";
 import { Modal } from "@/components/ui/modal";
@@ -15,6 +15,7 @@ export function MarketingHome() {
   const lookupInvite = useAuthStore((s) => s.lookupInvite);
   const enterAsViewer = useAuthStore((s) => s.enterAsViewer);
   const signedIn = hydrated && Boolean(user);
+  const searchParams = useSearchParams();
 
   const [inviteCode, setInviteCode] = useState("");
   const [passcode, setPasscode] = useState("");
@@ -23,6 +24,11 @@ export function MarketingHome() {
   const [treeName, setTreeName] = useState("");
   const [passOpen, setPassOpen] = useState(false);
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    const preset = searchParams.get("invite");
+    if (preset) setInviteCode(preset.toUpperCase());
+  }, [searchParams]);
 
   async function onInviteSubmit(event: React.FormEvent) {
     event.preventDefault();

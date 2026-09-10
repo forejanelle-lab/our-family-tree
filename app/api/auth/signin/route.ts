@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 import { findAccount, upsertAccount } from "@/lib/server-accounts";
+import { writeSession } from "@/lib/server-session";
 import { firstNameFrom, hashPassword, normalizeEmail, type StoredAccount } from "@/lib/auth";
 
 export async function POST(request: Request) {
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "That password doesn’t match." }, { status: 401 });
   }
 
+  await writeSession({ id: account.id, email: account.email, name: account.name });
   return NextResponse.json({
     ok: true,
     account,

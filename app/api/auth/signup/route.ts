@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 import { findAccount, upsertAccount } from "@/lib/server-accounts";
+import { writeSession } from "@/lib/server-session";
 import { hashPassword, normalizeEmail, type StoredAccount } from "@/lib/auth";
 
 export async function POST(request: Request) {
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
   };
 
   await upsertAccount(account);
+  await writeSession({ id: account.id, email: account.email, name: account.name });
   return NextResponse.json({
     ok: true,
     account,

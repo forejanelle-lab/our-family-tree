@@ -65,6 +65,17 @@ export default function SettingsPage() {
         <section className="mt-5 rounded-3xl border border-line bg-white p-6">
           <h2 className="font-serif text-2xl">This tree</h2>
           <p className="mt-2 text-sm text-soft">{tree.name}</p>
+          <div className="mt-4 space-y-2 rounded-2xl bg-cream px-4 py-3 text-sm">
+            <p>
+              Invite code <code className="ml-1 tracking-wide">{tree.inviteCode}</code>
+            </p>
+            <p>
+              View passcode <code className="ml-1 tracking-wide">{tree.viewPasscode}</code>
+            </p>
+            <p>
+              Join code <code className="ml-1 tracking-wide">{tree.editCode}</code>
+            </p>
+          </div>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button
               variant="secondary"

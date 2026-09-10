@@ -36,7 +36,9 @@ import type {
   Story,
 } from "@/lib/types";
 import { defaultPrivacy, emptyPersonDraft } from "@/lib/types";
+import { withUniqueShareCodes } from "@/lib/share-codes";
 import { clearTreeBackup } from "@/lib/tree-backup";
+import type { TreeSnapshot } from "@/lib/tree-snapshot";
 
 export type SaveState = "saved" | "saving" | "unsaved";
 export type ProfileTab = "details" | "photos" | "stories" | "events";
@@ -98,6 +100,7 @@ interface TreeState {
   updateTree: (patch: Partial<FamilyTreeRecord>) => void;
   setShareAccess: (access: ShareAccess) => void;
   createEmptyTree: () => void;
+  applySnapshot: (snapshot: TreeSnapshot, options?: { keepLocalPhotos?: boolean }) => void;
   loadWilliamsTree: () => void;
   loadAponteTree: () => void;
   startOnboardingSelf: (draft: PersonDraft) => string;
@@ -452,7 +455,7 @@ export const useTreeStore = create<TreeState>()(
 
       createEmptyTree: () => {
         clearTreeBackup();
-        const tree = { ...EMPTY_TREE, id: newId("tree") };
+        const tree = withUniqueShareCodes({ ...EMPTY_TREE, id: newId("tree") });
         set({
           trees: [tree],
           activeTreeId: tree.id,
@@ -464,6 +467,34 @@ export const useTreeStore = create<TreeState>()(
           sources: [],
           activity: [],
           selectedPersonId: null,
+          profileOpen: false,
+          onboardingStep: "none",
+        });
+        touchSave(set);
+      },
+
+      applySnapshot: (snapshot, options) => {
+        const localPeople = get().people;
+        const people = snapshot.people.map((person) => {
+          if (!options?.keepLocalPhotos) return person;
+          const local = localPeople.find((item) => item.id === person.id);
+          if (local?.profilePhotoUrl && !person.profilePhotoUrl) {
+            return { ...person, profilePhotoUrl: local.profilePhotoUrl };
+          }
+          return person;
+        });
+        set({
+          trees: [snapshot.tree],
+          activeTreeId: snapshot.tree.id,
+          people,
+          relationships: snapshot.relationships || [],
+          photos: snapshot.photos?.length ? snapshot.photos : options?.keepLocalPhotos ? get().photos : snapshot.photos || [],
+          stories: snapshot.stories || [],
+          events: snapshot.events || [],
+          sources: snapshot.sources || [],
+          activity: snapshot.activity || [],
+          userName: snapshot.userName || get().userName,
+          selectedPersonId: snapshot.people[0]?.id ?? null,
           profileOpen: false,
           onboardingStep: "none",
         });
