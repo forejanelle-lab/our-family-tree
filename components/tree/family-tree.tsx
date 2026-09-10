@@ -202,6 +202,9 @@ function TreeCanvas() {
                 setDownloading(true);
                 try {
                   downloadTreePdf(tree?.name || "Family Tree", people, relationships);
+                } catch (error) {
+                  console.error(error);
+                  window.alert("The PDF could not be created. Try again in a moment.");
                 } finally {
                   setDownloading(false);
                 }

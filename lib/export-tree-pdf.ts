@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { cardName, initials, lifespan } from "@/lib/format";
+import { cardName, displayName, initials, lifespan } from "@/lib/format";
 import {
   layoutFamilyTree,
   PERSON_NODE_HEIGHT,
@@ -15,6 +15,10 @@ function slug(value: string) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || "family-tree"
   );
+}
+
+function personLabel(person: Person) {
+  return cardName(person) || displayName(person) || "Family member";
 }
 
 function pageWindows(items: { start: number; size: number }[], pageSize: number) {
@@ -35,7 +39,16 @@ function pageWindows(items: { start: number; size: number }[], pageSize: number)
   return windows;
 }
 
-export function downloadTreePdf(
+function overlaps(
+  start: number,
+  size: number,
+  windowStart: number,
+  windowSize: number,
+) {
+  return start < windowStart + windowSize && start + size > windowStart;
+}
+
+export function buildTreePdf(
   treeName: string,
   people: Person[],
   relationships: Relationship[],
@@ -44,33 +57,37 @@ export function downloadTreePdf(
   const byId = new Map(people.map((person) => [person.id, person]));
   const nodePos = new Map(layout.nodes.map((node) => [node.id, node]));
 
-  const pageW = 842;
-  const pageH = 595;
+  const pageW = 841.89;
+  const pageH = 595.28;
   const margin = 36;
-  const headerH = 48;
+  const headerH = 52;
   const innerW = pageW - margin * 2;
   const innerH = pageH - margin * 2 - headerH;
-  const scale = 1;
 
   const xWindows = pageWindows(
     layout.nodes.map((node) => ({
       start: node.x,
       size: node.type === "person" ? PERSON_NODE_WIDTH : UNION_SIZE,
     })),
-    innerW / scale,
+    innerW,
   );
   const yWindows = pageWindows(
     layout.nodes.map((node) => ({
       start: node.y,
       size: node.type === "person" ? PERSON_NODE_HEIGHT : UNION_SIZE,
     })),
-    innerH / scale,
+    innerH,
   );
 
-  const pages = xWindows.flatMap((xWindow, col) =>
-    yWindows.map((yWindow, row) => ({ xWindow, yWindow, col, row })),
-  );
-  const total = Math.max(1, pages.length);
+  const treePages =
+    layout.nodes.length === 0
+      ? []
+      : xWindows.flatMap((xWindow, col) => yWindows.map((yWindow, row) => ({ xWindow, yWindow, col, row })));
+
+  const directory = [...people].sort((a, b) => personLabel(a).localeCompare(personLabel(b)));
+  const rowsPerPage = 16;
+  const directoryPages = Math.max(1, Math.ceil(directory.length / rowsPerPage));
+  const total = Math.max(1, treePages.length + directoryPages);
 
   const doc = new jsPDF({
     orientation: "landscape",
@@ -78,30 +95,34 @@ export function downloadTreePdf(
     format: "a4",
   });
 
-  function drawHeader(pageIndex: number, col: number, row: number) {
+  function paintBackground() {
     doc.setFillColor(249, 247, 242);
     doc.rect(0, 0, pageW, pageH, "F");
-    doc.setFont("times", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(33, 78, 52);
-    doc.text(treeName || "Family Tree", margin, margin + 14);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(106, 122, 111);
-    const parts = [
-      `${people.length} ${people.length === 1 ? "person" : "people"}`,
-      `Page ${pageIndex} of ${total}`,
-    ];
-    if (total > 1) parts.push(`section ${col + 1},${row + 1}`);
-    doc.text(parts.join("  ·  "), margin, margin + 32);
-    doc.setDrawColor(212, 175, 55);
-    doc.setLineWidth(1);
-    doc.line(margin, margin + headerH - 10, pageW - margin, margin + headerH - 10);
   }
 
-  function drawTree(originX: number, originY: number) {
-    const ox = margin - originX * scale;
-    const oy = margin + headerH - originY * scale;
+  function drawHeader(title: string, subtitle: string) {
+    paintBackground();
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(33, 78, 52);
+    doc.text(title, margin, margin + 16);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(90, 108, 94);
+    doc.text(subtitle, margin, margin + 34);
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(1.2);
+    doc.line(margin, margin + headerH - 8, pageW - margin, margin + headerH - 8);
+  }
+
+  function drawTreePage(
+    originX: number,
+    originY: number,
+    windowW: number,
+    windowH: number,
+  ) {
+    const ox = margin - originX;
+    const oy = margin + headerH - originY;
 
     for (const edge of layout.edges) {
       const from = nodePos.get(edge.source);
@@ -109,74 +130,118 @@ export function downloadTreePdf(
       if (!from || !to) continue;
       const fromPerson = from.type === "person";
       const toPerson = to.type === "person";
-      const x1 = ox + (from.x + (fromPerson ? PERSON_NODE_WIDTH / 2 : UNION_SIZE / 2)) * scale;
+      const x1 = ox + from.x + (fromPerson ? PERSON_NODE_WIDTH / 2 : UNION_SIZE / 2);
       const y1 =
         oy +
-        (from.y +
-          (fromPerson ? (edge.type === "spouse" ? PERSON_NODE_HEIGHT / 2 : PERSON_NODE_HEIGHT) : UNION_SIZE / 2)) *
-          scale;
-      const x2 = ox + (to.x + (toPerson ? PERSON_NODE_WIDTH / 2 : UNION_SIZE / 2)) * scale;
+        from.y +
+        (fromPerson ? (edge.type === "spouse" ? PERSON_NODE_HEIGHT / 2 : PERSON_NODE_HEIGHT) : UNION_SIZE / 2);
+      const x2 = ox + to.x + (toPerson ? PERSON_NODE_WIDTH / 2 : UNION_SIZE / 2);
       const y2 =
-        oy + (to.y + (toPerson ? (edge.type === "spouse" ? PERSON_NODE_HEIGHT / 2 : 0) : UNION_SIZE / 2)) * scale;
+        oy + to.y + (toPerson ? (edge.type === "spouse" ? PERSON_NODE_HEIGHT / 2 : 0) : UNION_SIZE / 2);
       doc.setDrawColor(33, 78, 52);
-      doc.setLineWidth(edge.type === "spouse" ? 1.4 : 1.1);
-      doc.setLineCap("round");
+      doc.setLineWidth(edge.type === "spouse" ? 1.5 : 1.15);
       doc.line(x1, y1, x2, y2);
     }
 
     for (const node of layout.nodes) {
+      const nodeW = node.type === "person" ? PERSON_NODE_WIDTH : UNION_SIZE;
+      const nodeH = node.type === "person" ? PERSON_NODE_HEIGHT : UNION_SIZE;
+      if (!overlaps(node.x, nodeW, originX, windowW) || !overlaps(node.y, nodeH, originY, windowH)) {
+        continue;
+      }
       if (node.type === "union") {
-        const x = ox + node.x * scale;
-        const y = oy + node.y * scale;
-        const size = UNION_SIZE * scale;
+        const x = ox + node.x;
+        const y = oy + node.y;
         doc.setFillColor(212, 175, 55);
-        doc.circle(x + size / 2, y + size / 2, size / 2, "F");
+        doc.circle(x + UNION_SIZE / 2, y + UNION_SIZE / 2, UNION_SIZE / 2, "F");
         continue;
       }
       const person = node.personId ? byId.get(node.personId) : undefined;
       if (!person) continue;
-      const x = ox + node.x * scale;
-      const y = oy + node.y * scale;
-      const w = PERSON_NODE_WIDTH * scale;
-      const h = PERSON_NODE_HEIGHT * scale;
+      const x = ox + node.x;
+      const y = oy + node.y;
       doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(180, 196, 181);
+      doc.setDrawColor(160, 176, 162);
       doc.setLineWidth(1);
-      doc.roundedRect(x, y, w, h, 14, 14, "FD");
+      doc.roundedRect(x, y, PERSON_NODE_WIDTH, PERSON_NODE_HEIGHT, 12, 12, "FD");
 
-      const cx = x + w / 2;
-      const avatarR = 24;
+      const cx = x + PERSON_NODE_WIDTH / 2;
       doc.setFillColor(215, 227, 216);
-      doc.circle(cx, y + 44, avatarR, "F");
+      doc.circle(cx, y + 48, 26, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(33, 78, 52);
+      doc.text(initials(person) || "·", cx, y + 53, { align: "center" });
+
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
-      doc.setTextColor(33, 78, 52);
-      doc.text(initials(person) || "·", cx, y + 48, { align: "center" });
-
-      doc.setFont("times", "bold");
-      doc.setFontSize(14);
       doc.setTextColor(36, 40, 37);
-      const nameLines = doc.splitTextToSize(cardName(person) || "Unknown", w - 24);
-      doc.text(nameLines, cx, y + h - 52, { align: "center" });
+      const nameLines = doc.splitTextToSize(personLabel(person), PERSON_NODE_WIDTH - 20);
+      doc.text(nameLines, cx, y + PERSON_NODE_HEIGHT - 58, { align: "center" });
       const years = lifespan(person);
-      if (years) {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(11);
-        doc.setTextColor(106, 122, 111);
-        doc.text(years, cx, y + h - 22, { align: "center" });
-      }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(90, 108, 94);
+      doc.text(years || "Dates unknown", cx, y + PERSON_NODE_HEIGHT - 24, { align: "center" });
     }
   }
 
-  pages.forEach((page, index) => {
-    if (index > 0) doc.addPage("a4", "landscape");
-    drawHeader(index + 1, page.col, page.row);
-    doc.saveGraphicsState();
-    doc.rect(margin, margin + headerH - 8, innerW, innerH + 8);
-    doc.clip();
-    drawTree(page.xWindow.start, page.yWindow.start);
-    doc.restoreGraphicsState();
+  function drawDirectoryPage(pageIndex: number) {
+    const start = pageIndex * rowsPerPage;
+    const rows = directory.slice(start, start + rowsPerPage);
+    let y = margin + headerH + 8;
+    rows.forEach((person, index) => {
+      if (index % 2 === 0) {
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(margin, y - 12, innerW, 26, 6, 6, "F");
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(36, 40, 37);
+      doc.text(personLabel(person), margin + 12, y);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(90, 108, 94);
+      doc.text(lifespan(person) || person.birthPlace || "Family member", margin + 280, y);
+      y += 28;
+    });
+    if (rows.length === 0) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      doc.setTextColor(90, 108, 94);
+      doc.text("No people have been added to this tree yet.", margin, margin + headerH + 24);
+    }
+  }
+
+  let pageIndex = 0;
+  treePages.forEach((page) => {
+    if (pageIndex > 0) doc.addPage("a4", "landscape");
+    pageIndex += 1;
+    drawHeader(
+      treeName || "Family Tree",
+      `${people.length} ${people.length === 1 ? "person" : "people"}  ·  Page ${pageIndex} of ${total}  ·  Tree`,
+    );
+    drawTreePage(page.xWindow.start, page.yWindow.start, page.xWindow.size, page.yWindow.size);
   });
 
+  for (let i = 0; i < directoryPages; i += 1) {
+    if (pageIndex > 0) doc.addPage("a4", "landscape");
+    pageIndex += 1;
+    drawHeader(
+      treeName || "Family Tree",
+      `${people.length} ${people.length === 1 ? "person" : "people"}  ·  Page ${pageIndex} of ${total}  ·  People`,
+    );
+    drawDirectoryPage(i);
+  }
+
+  return doc;
+}
+
+export function downloadTreePdf(
+  treeName: string,
+  people: Person[],
+  relationships: Relationship[],
+) {
+  const doc = buildTreePdf(treeName, people, relationships);
   doc.save(`${slug(treeName)}.pdf`);
 }
